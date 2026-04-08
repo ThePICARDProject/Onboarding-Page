@@ -32,3 +32,6 @@ Host picard
 3. If you you're in the `~/.ssh/` directory and type `ls` and do NOT see a `id_rsa` file, run `ssh-keygen -t rsa`.
 4. Run `ssh-copy-id picard` and enter your password(s) as prompted. You may be prompted for the same password several times.
 5. Once complete, you'll be able to type `ssh picard` and enter your Gateway password once to be fully SSH (and port tunneled) to the PICARD machine. 
+
+# Onboarding Portal
+As of April 2026, the PICARD 2026.08 team is working on an onboarding portal which will serve as an interface and centralized location for important information and onboarding procedures for the PICARD project. The portal is in early active development. 

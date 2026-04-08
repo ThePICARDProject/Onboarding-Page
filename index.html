@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PICARD Onboarding Portal</title>
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <header class="topnav">
+    <div class="brand">PICARD <span>Onboarding</span></div>
+    <nav>
+      <a href="index.html" class="active">Home</a>
+      <a href="pages/architecture.html">Architecture</a>
+      <a href="pages/presentation.html">Presentation</a>
+      <a href="pages/application.html">Application</a>
+      <a href="pages/execution.html">Execution</a>
+      <a href="pages/setup.html">Setup</a>
+    </nav>
+  </header>
+
+  <div class="page">
+    <div class="hero">
+      <div class="eyebrow">PICARD &middot; West Virginia University</div>
+      <h1>Welcome to the PICARD project.</h1>
+      <p>
+        PICARD is a research platform that lets students and faculty run
+        computationally heavy algorithms on a dedicated Hadoop/Spark cluster
+        without having to wire up the infrastructure themselves. This portal
+        is the fastest path from "I just joined" to "I'm shipping code."
+      </p>
+      <div class="cta-row">
+        <a href="pages/setup.html" class="btn primary">Start the setup &rarr;</a>
+        <a href="pages/architecture.html" class="btn">Learn the architecture</a>
+      </div>
+    </div>
+
+    <section>
+      <h2>What is PICARD?</h2>
+      <p>
+        PICARD provides a web-based interface to a Spark/Hadoop cluster running
+        on dedicated hardware in a WVU building. Researchers upload their
+        algorithms (as Scala JARs) and datasets (as CSVs), configure cluster
+        resources, and submit experiments through a browser. The platform
+        handles authentication, queueing, distributed execution, and result
+        delivery.
+      </p>
+      <p>
+        The project was originally inspired by Dr. Devine's master's thesis on
+        <strong>CoDRIFt</strong>, a custom RandomForest algorithm for
+        astronomically large datasets. The original CoDRIFt work required
+        wiring together 20+ PCs by hand to get acceptable performance &mdash;
+        PICARD productizes that experience for anyone in the lab.
+      </p>
+    </section>
+
+    <section>
+      <h2>The three layers</h2>
+      <p class="lead">
+        PICARD is built as three loosely coupled layers. Each layer has a
+        single, clear responsibility, and they communicate over well-defined
+        boundaries. Click any card to dive in.
+      </p>
+      <div class="cards">
+        <a href="pages/presentation.html" class="card linkable layer-pres">
+          <h3>Presentation Layer</h3>
+          <p>
+            React + Vite single-page app on port 5173. Handles login, file
+            uploads, experiment configuration, and real-time result streaming.
+            This is what users see and click.
+          </p>
+        </a>
+        <a href="pages/application.html" class="card linkable layer-app">
+          <h3>Application Layer</h3>
+          <p>
+            .NET 8 REST API on port 5080. Owns authentication, persistence
+            (MySQL/MariaDB), the experiment queue, and orchestration of the
+            cluster via shell scripts. The brain of the system.
+          </p>
+        </a>
+        <a href="pages/execution.html" class="card linkable layer-exec">
+          <h3>Execution Layer</h3>
+          <p>
+            Docker Swarm running per-experiment Hadoop/Spark stacks. HDFS for
+            storage, YARN for scheduling, Spark for the actual computation.
+            Where algorithms actually run.
+          </p>
+        </a>
+      </div>
+      <p>
+        For a side-by-side view of all three layers and how they connect, see
+        the <a href="pages/architecture.html">architecture overview</a>.
+      </p>
+    </section>
+
+    <section>
+      <h2>How a request flows through the system</h2>
+      <p>
+        At a high level, every experiment follows the same path. The frontend
+        collects configuration and hands it to the backend, the backend
+        persists it and queues it, a background worker dequeues it and
+        launches a fresh Spark cluster on the swarm, results are written back
+        to disk, and the frontend streams the logs and final output to the
+        user's browser.
+      </p>
+      <div class="pipeline">
+        <span class="stage">Browser</span>
+        <span class="arrow">&rarr;</span>
+        <span class="stage">React (Vite, 5173)</span>
+        <span class="arrow">&rarr;</span>
+        <span class="stage">.NET API (5080)</span>
+        <span class="arrow">&rarr;</span>
+        <span class="stage">MySQL + Channel queue</span>
+        <span class="arrow">&rarr;</span>
+        <span class="stage">DockerSwarm service</span>
+        <span class="arrow">&rarr;</span>
+        <span class="stage">submit-experiment.sh</span>
+        <span class="arrow">&rarr;</span>
+        <span class="stage">Spark on Hadoop/HDFS</span>
+        <span class="arrow">&rarr;</span>
+        <span class="stage">Result file</span>
+      </div>
+    </section>
+
+    <section>
+      <h2>Where to go next</h2>
+      <div class="cards">
+        <a href="pages/setup.html" class="card linkable">
+          <h3>I want to run it locally</h3>
+          <p>
+            Step-by-step instructions for SSH gateway access, port tunneling,
+            and starting the frontend + backend.
+          </p>
+        </a>
+        <a href="pages/architecture.html" class="card linkable">
+          <h3>I want to understand the system</h3>
+          <p>
+            Architecture overview connecting all three layers, with diagrams
+            and request lifecycles.
+          </p>
+        </a>
+        <a href="https://github.com/ThePICARDProject" class="card linkable">
+          <h3>I want to read the code</h3>
+          <p>
+            Frontend (<code>481-FrontEnd</code>) and backend
+            (<code>API-backend</code>) live under the
+            <code>ThePICARDProject</code> GitHub org.
+          </p>
+        </a>
+      </div>
+    </section>
+  </div>
+
+  <footer class="site-footer">
+    PICARD Onboarding Portal &middot; v0.2 draft &middot; PICARD 2026.08 team
+  </footer>
+</body>
+</html>

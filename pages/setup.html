@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Setup &middot; PICARD Onboarding</title>
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+  <header class="topnav">
+    <div class="brand">PICARD <span>Onboarding</span></div>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="architecture.html">Architecture</a>
+      <a href="presentation.html">Presentation</a>
+      <a href="application.html">Application</a>
+      <a href="execution.html">Execution</a>
+      <a href="setup.html" class="active">Setup</a>
+    </nav>
+  </header>
+
+  <div class="page with-sidebar">
+    <aside class="subnav">
+      <div class="label">On this page</div>
+      <ul>
+        <li><a href="#prereqs">Prerequisites</a></li>
+        <li><a href="#ssh-setup">SSH Setup</a></li>
+        <li><a href="#ssh-config">SSH Config</a></li>
+        <li><a href="#booting">Booting Up</a></li>
+        <li><a href="#using">Using the Site</a></li>
+        <li><a href="#experiments">Running Experiments</a></li>
+        <li><a href="#resources">Resources</a></li>
+      </ul>
+    </aside>
+
+    <main class="content">
+      <section>
+        <h1>Setup</h1>
+        <p class="lead">
+          Everything you need to go from a fresh laptop to a running PICARD
+          frontend connected to the production backend.
+        </p>
+      </section>
+
+      <section id="prereqs">
+        <h2>Prerequisites</h2>
+        <p>Before you can run anything, you'll need:</p>
+        <ul>
+          <li>An approved WVU SSH gateway account (your <code>&lt;username&gt;@ssh.wvu.edu</code>)</li>
+          <li>An account on the PICARD server (Dr. Devine or a team member can create one)</li>
+          <li>Membership in the <a href="https://github.com/ThePICARDProject">ThePICARDProject</a> GitHub organization</li>
+          <li><code>npm</code> installed locally (for the frontend)</li>
+          <li>Chrome (the frontend was designed against Chrome &mdash; Firefox tends to throw CORS errors)</li>
+        </ul>
+      </section>
+
+      <section id="ssh-setup">
+        <h2>SSH Setup</h2>
+        <ol class="steps">
+          <li>
+            <strong>Request gateway access.</strong>
+            Submit the <a href="https://wvu.atlassian.net/servicedesk/customer/portal/5/create/638?src=182487431">WVU service desk form</a>.
+            Use <code>157.182.194.132</code> as the destination IP.
+          </li>
+          <li>
+            <strong>Verify gateway access.</strong>
+            <pre><code>ssh &lt;your-username&gt;@ssh.wvu.edu</code></pre>
+          </li>
+          <li>
+            <strong>Get a PICARD server account.</strong>
+            Have a team member create one for you.
+          </li>
+          <li>
+            <strong>Hop from gateway to PICARD.</strong>
+            <pre><code>ssh &lt;your-username&gt;@picard.csee.wvu.edu</code></pre>
+          </li>
+        </ol>
+        <p>If you're logged in, you're set up. Move on to SSH config (recommended) or jump straight to <a href="#booting">Booting Up</a>.</p>
+      </section>
+
+      <section id="ssh-config">
+        <h2>SSH Config (Optional but Recommended)</h2>
+        <p>
+          Configure an identity-based jump so you can <code>ssh picard</code>
+          in one shot with the tunnel preconfigured.
+        </p>
+        <ol class="steps">
+          <li>Open (or create) <code>~/.ssh/config</code>.</li>
+          <li>
+            Add the following:
+<pre><code>Host gateway
+    HostName ssh.wvu.edu
+    Port 22
+    User &lt;your school username&gt;
+    IdentityFile ~/.ssh/id_rsa
+    LocalForward 5080 localhost:5080
+
+Host picard
+    HostName picard.csee.wvu.edu
+    User &lt;your school username&gt;
+    Port 22
+    IdentityFile ~/.ssh/id_rsa
+    ProxyJump gateway
+    LocalForward 5080 localhost:5080</code></pre>
+          </li>
+          <li>If you don't have an <code>id_rsa</code> in <code>~/.ssh/</code>, generate one: <code>ssh-keygen -t rsa</code>.</li>
+          <li>Copy your key: <code>ssh-copy-id picard</code> (you'll be prompted for passwords a few times).</li>
+          <li>Now <code>ssh picard</code> drops you straight in with port 5080 forwarded.</li>
+        </ol>
+      </section>
+
+      <section id="booting">
+        <h2>Booting Up</h2>
+        <p class="lead">
+          Get the frontend running locally and connected to the backend.
+        </p>
+        <ol class="steps">
+          <li>Clone <code>481-FrontEnd</code> to your local machine.</li>
+          <li>Install dependencies: <code>npm install</code> (and <code>npm install vite</code> if needed).</li>
+          <li>
+            From the <code>picard</code> folder (typically <code>/481-FrontEnd/picard</code>),
+            start the dev server:
+            <pre><code>npm run dev</code></pre>
+            Press <code>o + enter</code> to open the page. It will load on
+            <code>localhost:5173</code> but will <strong>not work</strong>
+            until the backend tunnel is active.
+          </li>
+          <li>
+            In another terminal, SSH into the WVU gateway with port forwarding:
+            <pre><code>ssh -L 5080:127.0.0.1:5080 &lt;username&gt;@ssh.wvu.edu</code></pre>
+            <div class="callout warn">
+              <span class="label">Heads up</span>
+              Use <code>127.0.0.1</code> rather than <code>localhost</code> &mdash;
+              some systems don't resolve <code>localhost</code> consistently.
+              If the command errors, try it again (sometimes it takes 2&ndash;3 attempts).
+            </div>
+          </li>
+          <li>
+            From the gateway, SSH to the PICARD server with the same forward:
+            <pre><code>ssh -L 5080:127.0.0.1:5080 backend@157.182.194.132</code></pre>
+            The current group username is <code>backend</code>. This may change in later semesters.
+          </li>
+          <li>
+            Verify you're in <code>/home/backend</code>:
+            <pre><code>pwd
+# if not:
+cd /home/backend</code></pre>
+          </li>
+          <li>
+            Check whether the backend is already running:
+            <pre><code>lsof -i :5080
+# or
+ps aux | grep API-backend</code></pre>
+            If you see output, you're good. If not, start it manually:
+            <pre><code>cd /home/backend/API-backend
+dotnet run</code></pre>
+            <div class="callout warn">
+              <span class="label">Warning</span>
+              The <code>dotnet</code> instance dies if the terminal closes.
+              Keep the session open while you're working.
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      <section id="using">
+        <h2>Using the Site</h2>
+        <ol>
+          <li>The frontend serves on <code>localhost:5173</code>.</li>
+          <li>Click the login button. You'll be redirected to <code>localhost:5080</code> (the tunneled backend).</li>
+          <li>Sign in with a Google account ending in <code>@mix.wvu.edu</code>. Login may flake (whitepage, 404, freeze) &mdash; back out and retry; only treat it as broken after ~4 attempts.</li>
+          <li>You'll land on the main dashboard.</li>
+        </ol>
+        <div class="callout tip">
+          <span class="label">Tip</span>
+          Stale cookies from previous sessions can produce odd behavior. If
+          something looks off, clear cookies for <code>localhost</code>.
+        </div>
+      </section>
+
+      <section id="experiments">
+        <h2>Running Experiments</h2>
+        <ol>
+          <li>Click <strong>NEW EXPERIMENT</strong>.</li>
+          <li>Click <strong>+ Add New Algorithm</strong>. Use a preset from the algorithms repo while you're learning the system.</li>
+          <li>Upload a CSV as your dataset.</li>
+          <li>Pick your algorithm, configure parameters, name the experiment, and submit.</li>
+        </ol>
+        <div class="callout warn">
+          <span class="label">Reality check</span>
+          Algorithms that work locally may still fail on the cluster &mdash;
+          and you won't find out until the swarm finishes spinning up
+          (~3 minutes). Budget about 5 minutes per "is my submission valid"
+          cycle and remember that the error could be anywhere in the upload
+          chain.
+        </div>
+      </section>
+
+      <section id="resources">
+        <h2>Resources</h2>
+        <div class="cards">
+          <div class="card">
+            <h3>Frontend repo</h3>
+            <p><a href="https://github.com/ThePICARDProject/481-FrontEnd">ThePICARDProject/481-FrontEnd</a></p>
+          </div>
+          <div class="card">
+            <h3>Backend repo</h3>
+            <p><a href="https://github.com/ThePICARDProject/API-backend">ThePICARDProject/API-backend</a></p>
+          </div>
+          <div class="card">
+            <h3>GitHub org</h3>
+            <p><a href="https://github.com/ThePICARDProject">ThePICARDProject</a></p>
+          </div>
+          <div class="card">
+            <h3>WVU SSH access form</h3>
+            <p><a href="https://wvu.atlassian.net/servicedesk/customer/portal/5/create/638?src=182487431">Service desk request</a></p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    PICARD Onboarding Portal &middot; v0.2 draft &middot; PICARD 2026.08 team
+  </footer>
+</body>
+</html>

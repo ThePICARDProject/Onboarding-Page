@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Presentation Layer &middot; PICARD Onboarding</title>
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+  <header class="topnav">
+    <div class="brand">PICARD <span>Onboarding</span></div>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="architecture.html">Architecture</a>
+      <a href="presentation.html" class="active">Presentation</a>
+      <a href="application.html">Application</a>
+      <a href="execution.html">Execution</a>
+      <a href="setup.html">Setup</a>
+    </nav>
+  </header>
+
+  <div class="page with-sidebar">
+    <aside class="subnav">
+      <div class="label">On this page</div>
+      <ul>
+        <li><a href="#diagram">Diagram</a></li>
+        <li><a href="#stack">Tech Stack</a></li>
+        <li><a href="#composition">Provider Composition</a></li>
+        <li><a href="#routes-public">Public Routes</a></li>
+        <li><a href="#routes-protected">Protected Routes</a></li>
+        <li><a href="#components">Shared Components</a></li>
+        <li><a href="#auth">Authentication Flow</a></li>
+        <li><a href="#workflow">Experiment Workflow</a></li>
+        <li><a href="#external">External Services</a></li>
+      </ul>
+      <div class="label">Other layers</div>
+      <ul>
+        <li><a href="application.html">Application Layer</a></li>
+        <li><a href="execution.html">Execution Layer</a></li>
+      </ul>
+    </aside>
+
+    <main class="content">
+      <div class="layer-banner pres">
+        <div class="label">Layer 1 of 3</div>
+        <h1>Presentation Layer</h1>
+        <p>
+          The React + Vite single-page application that users interact with.
+          It owns rendering, routing, client-side validation, and the
+          authentication state &mdash; but no business logic and no
+          persistence.
+        </p>
+      </div>
+
+      <section id="diagram">
+        <h2>Diagram</h2>
+        <div class="diagram">
+          <img src="../assets/diagrams/presentation-layer.png" alt="Presentation layer architecture diagram">
+        </div>
+        <div class="diagram-caption">
+          Components, providers, routes, and the calls each page makes back to
+          the API. Source: <code>docs/preslayer/presentation-layer.png</code>.
+        </div>
+      </section>
+
+      <section id="stack">
+        <h2>Technology stack</h2>
+        <table>
+          <thead>
+            <tr><th>Technology</th><th>Role</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Vite</strong></td><td>Build tool and dev server on port <code>5173</code>; proxies <code>/api/*</code> to <code>localhost:5080</code></td></tr>
+            <tr><td><strong>React 18</strong></td><td>Core UI framework (component-based SPA)</td></tr>
+            <tr><td><strong>React Router DOM v6</strong></td><td>Client-side routing &mdash; public and protected route trees</td></tr>
+            <tr><td><strong>TailwindCSS</strong></td><td>Primary utility-first CSS framework</td></tr>
+            <tr><td><strong>MUI (Material UI) v6</strong></td><td>Component library &mdash; tables, circular progress, accordions, data grid</td></tr>
+            <tr><td><strong>React Bootstrap</strong></td><td>Modal dialogs (algorithm upload, batch submit)</td></tr>
+            <tr><td><strong>Axios</strong></td><td>HTTP client &mdash; global <code>Authorization</code> header set by AuthProvider</td></tr>
+            <tr><td><strong>PapaParse</strong></td><td>Client-side CSV parsing for data visualization</td></tr>
+            <tr><td><strong>JSZip</strong></td><td>ZIP extraction for algorithm JAR uploads (reads <code>picard.json</code> metadata)</td></tr>
+          </tbody>
+        </table>
+        <p>
+          The frontend runs on port <strong>5173</strong> during development
+          and proxies all <code>/api/*</code> requests to the .NET backend on
+          port <strong>5080</strong>. The Vite proxy strips the
+          <code>/api</code> prefix before forwarding. The API base URL is
+          configurable via the <code>VITE_API_BASE</code> environment variable
+          (defaults to <code>/api</code>).
+        </p>
+      </section>
+
+      <section id="composition">
+        <h2>Provider composition</h2>
+        <p>
+          The entire application is wrapped in three nested providers, defined
+          in <code>App.jsx</code>. Anything inside these providers can read
+          auth, theme, or routing state without prop-drilling.
+        </p>
+        <table>
+          <thead>
+            <tr><th>Provider</th><th>Source</th><th>Responsibility</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>AuthProvider</strong></td>
+              <td><code>components/authprovider/authprovider.jsx</code></td>
+              <td>Manages auth token in <code>localStorage</code>, sets Axios <code>Authorization</code> header globally, validates session against <code>GET /Authentication/session</code> on mount</td>
+            </tr>
+            <tr>
+              <td><strong>ThemeProvider</strong></td>
+              <td><code>context/themeContext.jsx</code></td>
+              <td>Manages dark/light mode toggle, persists preference to <code>localStorage</code>, toggles <code>document.body.classList("dark")</code></td>
+            </tr>
+            <tr>
+              <td><strong>React Router</strong></td>
+              <td><code>routes.jsx</code></td>
+              <td>Route tree &mdash; splits into public (unauthenticated) and protected (authenticated) branches</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="routes-public">
+        <h2>Public routes</h2>
+        <p>These routes do not require an auth token.</p>
+        <table>
+          <thead>
+            <tr><th>Page</th><th>Route</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>LandingPage</strong></td><td><code>/</code></td><td>ASCII art spaceship splash with a call-to-action link to login</td></tr>
+            <tr><td><strong>LoginPage</strong></td><td><code>/login</code></td><td>"Login with Mix Account" button &mdash; redirects to backend OAuth endpoint (<code>/Authentication/login</code>)</td></tr>
+            <tr><td><strong>RequestAccountPage</strong></td><td><code>/request-account</code></td><td>Email input form to request platform access</td></tr>
+            <tr><td><strong>AuthPage</strong></td><td><code>/authenticationPage</code></td><td>OAuth callback handler &mdash; parses URL params, calls <code>setToken()</code>, redirects to <code>/home</code></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="routes-protected">
+        <h2>Protected routes</h2>
+        <p>
+          <code>ProtectedRoute</code> (<code>components/protectedroute/protectedroute.jsx</code>)
+          checks for a valid auth token and redirects to <code>/login</code>
+          if absent. All protected pages render inside this wrapper via
+          React Router's <code>&lt;Outlet&gt;</code>.
+        </p>
+        <table>
+          <thead>
+            <tr><th>Page</th><th>Route</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Home</strong></td><td><code>/home</code></td><td>Dashboard &mdash; fetches user experiments via <code>GET /api/experiment/user/getUserExperiments</code>, displays the most recent <code>ExperimentCard</code></td></tr>
+            <tr><td><strong>ExperimentCreation</strong></td><td><code>/experimentSetup</code></td><td>Algorithm and dataset selection with upload modals; navigates to parameter configuration</td></tr>
+            <tr><td><strong>ExperimentSetup</strong></td><td><code>/experiment?algorithmId=X</code></td><td>Parameter configuration (algorithm params + cluster settings), dataset assignment, single and batch experiment submission via <code>POST /api/experiment/submit</code></td></tr>
+            <tr><td><strong>QueuePage</strong></td><td><code>/queue</code></td><td>Circular progress indicator with queue position that decrements every 10 seconds</td></tr>
+            <tr><td><strong>ResultsPage</strong></td><td><code>/experiment-results</code></td><td>Polls experiment status every 1 second; WebSocket real-time log streaming (<code>ws://.../experiment/watch/{id}</code>); download output files</td></tr>
+            <tr><td><strong>DataVisualization</strong></td><td><code>/visualization</code></td><td>CSV table viewer with PapaParse parsing, MUI Table with pagination and sticky headers</td></tr>
+            <tr><td><strong>Profile</strong></td><td><code>/profile</code></td><td>User info display, full experiment history with state filtering</td></tr>
+            <tr><td><strong>Settings</strong></td><td><code>/settings</code></td><td>Theme toggle (light/dark), Google account management link</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="components">
+        <h2>Shared components</h2>
+        <table>
+          <thead>
+            <tr><th>Component</th><th>Used By</th><th>Responsibility</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Header</strong></td><td>All protected pages</td><td>Navbar with PICARD branding, nav links, hamburger menu</td></tr>
+            <tr><td><strong>ExperimentCard</strong></td><td>Home, Profile</td><td>Experiment name, status badge (Queued / In Progress / Processing / Finished / Failed), action links</td></tr>
+            <tr><td><strong>FileUploader</strong></td><td>ExperimentCreation</td><td>Chunked file upload (1 MB chunks) for CSV datasets via <code>POST /api/dataset/upload</code></td></tr>
+            <tr><td><strong>AlgorithmModal</strong></td><td>ExperimentCreation</td><td>Bootstrap modal for algorithm JAR upload &mdash; extracts <code>picard.json</code> from ZIP for parameter definitions</td></tr>
+            <tr><td><strong>ClusterParameters</strong></td><td>ExperimentSetup</td><td>Loads cluster configuration defaults from <code>config.json</code>; renders form fields for node count, memory, cores</td></tr>
+            <tr><td><strong>CSVViewer</strong></td><td>DataVisualization</td><td>PapaParse CSV parsing, MUI Table rendering with pagination and sticky headers</td></tr>
+            <tr><td><strong>Parameter</strong></td><td>ExperimentSetup</td><td>Labeled text input for individual algorithm parameters</td></tr>
+            <tr><td><strong>HowToExperiment</strong></td><td>ExperimentCreation</td><td>Toast popup with step-by-step experiment creation instructions</td></tr>
+            <tr><td><strong>Jsonify</strong></td><td>ExperimentSetup</td><td>Utility that constructs the backend-ready JSON payload from form data</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="auth">
+        <h2>Authentication flow</h2>
+        <p>
+          The authentication flow uses Google OAuth 2.0, mediated entirely
+          through the backend &mdash; the frontend never communicates
+          directly with Google.
+        </p>
+        <ol class="steps">
+          <li>
+            <strong>Login initiation.</strong>
+            <code>LoginPage</code> redirects the browser to the backend's
+            <code>/Authentication/login</code> endpoint.
+          </li>
+          <li>
+            <strong>OAuth redirect.</strong>
+            The backend redirects to Google OAuth 2.0, restricted to the
+            <code>@mix.wvu.edu</code> domain.
+          </li>
+          <li>
+            <strong>Callback.</strong>
+            Google redirects back to the frontend's
+            <code>/authenticationPage</code> route with user details as URL
+            parameters (<code>userID</code>, <code>userEmail</code>,
+            <code>firstName</code>, <code>lastName</code>).
+          </li>
+          <li>
+            <strong>Token persistence.</strong>
+            <code>AuthPage</code> calls <code>AuthProvider.setToken()</code>,
+            which stores user info in <code>localStorage</code> and sets the
+            Axios <code>Authorization</code> header globally.
+          </li>
+          <li>
+            <strong>Session validation.</strong>
+            On app mount, <code>AuthProvider</code> calls
+            <code>GET /Authentication/session</code> to validate the stored
+            token. Invalid tokens are cleared.
+          </li>
+          <li>
+            <strong>Logout.</strong>
+            <code>Header</code> triggers <code>GET /Authentication/logout</code>
+            on the backend, then clears the local token via
+            <code>AuthProvider</code>.
+          </li>
+        </ol>
+      </section>
+
+      <section id="workflow">
+        <h2>Experiment workflow (user perspective)</h2>
+        <ol class="steps">
+          <li>
+            <strong>ExperimentCreation</strong> &mdash;
+            User selects an algorithm
+            (<code>GET /api/algorithms/algorithms</code>) and a dataset
+            (<code>GET /api/dataset</code>). New ones can be uploaded via
+            modals. On "Proceed", the user is navigated to the configuration
+            page with the selected <code>algorithmId</code>.
+          </li>
+          <li>
+            <strong>ExperimentSetup</strong> &mdash;
+            Algorithm parameters are fetched via
+            <code>GET /api/algorithms/algorithmParameters</code>. The user
+            configures algorithm params, cluster params (node count,
+            driver/executor memory and cores), and assigns a dataset. Submit
+            sends a <code>POST /api/experiment/submit</code>. Batch submission
+            allows multiple experiments with parameter sweeps.
+          </li>
+          <li>
+            <strong>QueuePage</strong> &mdash;
+            Circular progress indicator with queue position. Position
+            decrements every 10 seconds. When the experiment starts executing,
+            the user is navigated to results.
+          </li>
+          <li>
+            <strong>ResultsPage</strong> &mdash;
+            Polls <code>GET /api/experiment/status/{id}</code> every 1 second
+            and holds open a WebSocket to <code>/experiment/watch/{id}</code>
+            for real-time log streaming, rendered in a terminal-style display
+            (green text on black). Once finished, a download button enables
+            retrieval of output files.
+          </li>
+          <li>
+            <strong>DataVisualization</strong> &mdash;
+            Displays experiment output as a paginated CSV table using
+            PapaParse for parsing and MUI Table for rendering.
+          </li>
+        </ol>
+      </section>
+
+      <section id="external">
+        <h2>External services</h2>
+        <table>
+          <thead>
+            <tr><th>Service</th><th>Role</th><th>Communication</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Backend API (port 5080)</strong></td>
+              <td>.NET 8 REST API &mdash; data persistence, experiment execution, authentication</td>
+              <td>All requests proxied through Vite (<code>/api/*</code> &rarr; <code>localhost:5080</code>)</td>
+            </tr>
+            <tr>
+              <td><strong>Google OAuth 2.0</strong></td>
+              <td>Authentication provider</td>
+              <td>Indirect &mdash; login redirect handled entirely by the backend</td>
+            </tr>
+            <tr>
+              <td><strong>localStorage</strong></td>
+              <td>Browser-local persistence</td>
+              <td>Auth token (<code>userID</code>, <code>userEmail</code>, <code>firstName</code>, <code>lastName</code>) and theme preference</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    PICARD Onboarding Portal &middot; v0.2 draft &middot; PICARD 2026.08 team
+  </footer>
+</body>
+</html>

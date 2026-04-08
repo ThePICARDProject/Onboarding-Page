@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Architecture &middot; PICARD Onboarding</title>
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+  <header class="topnav">
+    <div class="brand">PICARD <span>Onboarding</span></div>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="architecture.html" class="active">Architecture</a>
+      <a href="presentation.html">Presentation</a>
+      <a href="application.html">Application</a>
+      <a href="execution.html">Execution</a>
+      <a href="setup.html">Setup</a>
+    </nav>
+  </header>
+
+  <div class="page with-sidebar">
+    <aside class="subnav">
+      <div class="label">On this page</div>
+      <ul>
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#layers">The Three Layers</a></li>
+        <li><a href="#lifecycle">Experiment Lifecycle</a></li>
+        <li><a href="#boundaries">Layer Boundaries</a></li>
+        <li><a href="#mental-model">Mental Model</a></li>
+      </ul>
+      <div class="label">Drill down</div>
+      <ul>
+        <li><a href="presentation.html">Presentation Layer</a></li>
+        <li><a href="application.html">Application Layer</a></li>
+        <li><a href="execution.html">Execution Layer</a></li>
+      </ul>
+    </aside>
+
+    <main class="content">
+      <section id="overview">
+        <h1>System Architecture</h1>
+        <p class="lead">
+          A bird's-eye view of how PICARD is put together. Read this first
+          before diving into any individual layer.
+        </p>
+        <p>
+          PICARD is a three-layer system. Each layer owns a single concern,
+          and the boundaries between them are deliberately narrow:
+        </p>
+        <ul>
+          <li>The <strong>presentation layer</strong> renders pages and collects user input.</li>
+          <li>The <strong>application layer</strong> persists state, queues work, and issues commands.</li>
+          <li>The <strong>execution layer</strong> spins up cluster resources and runs the actual algorithm.</li>
+        </ul>
+        <p>
+          The big architectural choice that shapes everything else is that
+          the application layer doesn't talk to the cluster over an API
+          &mdash; it shells out to bash scripts that wrap Docker and
+          <code>spark-submit</code>. The cluster is treated as a fire-and-forget
+          subprocess that writes results to shared disk. This is simpler than
+          a real RPC layer but it's the source of most of PICARD's quirks
+          (no callbacks, single-experiment-at-a-time, manual cleanup).
+        </p>
+      </section>
+
+      <section id="layers">
+        <h2>The three layers</h2>
+        <div class="cards">
+          <a href="presentation.html" class="card linkable layer-pres">
+            <h3>Presentation</h3>
+            <p>
+              <strong>React 18 + Vite</strong> SPA on port 5173. React Router
+              for navigation, TailwindCSS + MUI for UI, Axios for HTTP, and
+              client-side parsing for JARs (JSZip) and CSVs (PapaParse).
+              Auth state lives in <code>localStorage</code> and is gated by a
+              <code>ProtectedRoute</code> wrapper.
+            </p>
+          </a>
+          <a href="application.html" class="card linkable layer-app">
+            <h3>Application</h3>
+            <p>
+              <strong>.NET 8 / C#</strong> API on port 5080. Controllers
+              expose the REST surface, services hold the business logic, EF
+              Core persists to MySQL/MariaDB. A <code>System.Threading.Channels</code>
+              queue decouples HTTP submission from background execution; a
+              hosted <code>BackgroundService</code> drains it one experiment
+              at a time.
+            </p>
+          </a>
+          <a href="execution.html" class="card linkable layer-exec">
+            <h3>Execution</h3>
+            <p>
+              <strong>Docker Swarm</strong> running per-experiment Hadoop/Spark
+              stacks. HDFS NameNode + YARN ResourceManager on the master node,
+              DataNode + NodeManager on workers. Ephemeral containers inject
+              the dataset and extract results. The whole stack is torn down
+              after every run.
+            </p>
+          </a>
+        </div>
+      </section>
+
+      <section id="lifecycle">
+        <h2>The full experiment lifecycle</h2>
+        <p>
+          Every experiment in PICARD takes the same path. Understanding this
+          end-to-end flow is the single most useful thing you can learn on
+          your first day.
+        </p>
+        <ol class="steps">
+          <li>
+            <strong>The user configures an experiment in the browser.</strong>
+            They pick an algorithm (a <code>.jar</code>), a dataset (a
+            <code>.csv</code>), set algorithm-specific parameters, and dial in
+            cluster resources (node count, executor memory, cores, etc.).
+            All of this happens in the React SPA on <code>localhost:5173</code>.
+          </li>
+          <li>
+            <strong>The frontend POSTs the config to the backend.</strong>
+            <code>POST /api/experiment/submit</code> goes through the Vite
+            proxy to the .NET API on <code>localhost:5080</code>. The HTTP
+            response returns <em>immediately</em> with an experiment ID
+            &mdash; the actual work hasn't started yet.
+          </li>
+          <li>
+            <strong>The backend persists the request and enqueues it.</strong>
+            <code>ExperimentService.SubmitExperimentAsync</code> writes
+            three rows in a single transaction (the experiment, its cluster
+            params, and its algorithm param values), then drops the request
+            into an unbounded <code>Channel&lt;ExperimentRequest&gt;</code>.
+            Status: <code>WaitingInQueue</code>.
+          </li>
+          <li>
+            <strong>A background worker dequeues the experiment.</strong>
+            <code>ExperimentWorkerService</code> is a hosted
+            <code>BackgroundService</code> running an infinite loop. It reads
+            from the channel, opens a fresh DI scope (so EF Core gets a clean
+            <code>DbContext</code>), and calls
+            <code>ExperimentService.RunExperimentAsync</code>.
+            Status flips to <code>BeingExecuted</code>.
+          </li>
+          <li>
+            <strong>The DockerSwarm service launches a shell script.</strong>
+            <code>DockerSwarm</code> rewrites
+            <code>docker-images/spark-hadoop/Dockerfile</code> to bake in the
+            user's algorithm JARs, then spawns
+            <code>submit-experiment.sh</code> as a subprocess via
+            <code>System.Diagnostics.Process</code>, passing ~20 positional
+            arguments. The PID is persisted so the experiment can be killed.
+          </li>
+          <li>
+            <strong>The script builds and deploys a Spark/Hadoop stack on Docker Swarm.</strong>
+            It builds the image, deploys a master container and N worker
+            containers wired together by a per-experiment overlay network,
+            then runs an ephemeral <em>dataset injector</em> container that
+            does <code>hdfs dfs -put</code> to load the CSV into HDFS.
+          </li>
+          <li>
+            <strong>Spark runs the algorithm.</strong>
+            The script invokes <code>spark-submit --master yarn</code> on the
+            master container. Spark distributes the work to YARN-allocated
+            executors on the worker nodes. Output is written back into HDFS
+            at <code>/data/{userId}/{experimentId}/</code>.
+          </li>
+          <li>
+            <strong>An ephemeral results extractor pulls the output back to disk.</strong>
+            Another one-shot container runs <code>hdfs dfs -getmerge</code>
+            to merge the distributed output files into a single result file
+            at <code>./results/{userId}/{experimentId}/</code> on the host.
+          </li>
+          <li>
+            <strong>The script tears down the stack.</strong>
+            <code>cleanup.sh</code> runs unconditionally (success or failure)
+            with a 30-second timeout, removing the Docker stack and cleaning
+            up HDFS artifacts.
+          </li>
+          <li>
+            <strong>The backend records the result and updates status.</strong>
+            <code>ExperimentService</code> writes an
+            <code>ExperimentResult</code> row pointing at the output file and
+            transitions the experiment to <code>Finished</code> (or
+            <code>Failed</code> with an error message truncated to 255 chars).
+          </li>
+          <li>
+            <strong>The frontend has been polling and streaming the whole time.</strong>
+            <code>ResultsPage</code> hits <code>GET /api/experiment/status/{id}</code>
+            once a second and holds open a WebSocket to
+            <code>/experiment/watch/{id}</code> for live log streaming
+            (rendered as green-on-black terminal output). When the status
+            flips to <code>Finished</code>, a download button appears.
+          </li>
+        </ol>
+      </section>
+
+      <section id="boundaries">
+        <h2>Layer boundaries at a glance</h2>
+        <p>
+          These are the contracts that connect the layers. If you need to
+          change the contract between two layers, both sides have to move
+          together &mdash; otherwise stick to one layer at a time.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Boundary</th>
+              <th>Mechanism</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Browser &harr; Presentation</td>
+              <td>HTTP / WebSocket on <code>localhost:5173</code></td>
+              <td>Vite dev server. <code>/api/*</code> is proxied to the backend.</td>
+            </tr>
+            <tr>
+              <td>Presentation &harr; Application</td>
+              <td>REST + WebSocket on <code>localhost:5080</code></td>
+              <td>Bearer token in <code>Authorization</code> header (set by AuthProvider). Logs streamed via WS.</td>
+            </tr>
+            <tr>
+              <td>Application &harr; Persistence</td>
+              <td>EF Core &rarr; MySQL/MariaDB</td>
+              <td>13 <code>DbSet&lt;&gt;</code> entities. Code-first migrations. Serilog also writes structured logs to a <code>Logs</code> table.</td>
+            </tr>
+            <tr>
+              <td>Application &rarr; Execution</td>
+              <td><code>System.Diagnostics.Process</code> &rarr; bash</td>
+              <td>One-way, fire-and-forget. No callbacks. Backend reads stderr and waits for exit code.</td>
+            </tr>
+            <tr>
+              <td>Execution &rarr; Application</td>
+              <td>Shared local disk</td>
+              <td>Results file at <code>./results/{userId}/{experimentId}/</code>. Backend reads from disk after the script exits.</td>
+            </tr>
+            <tr>
+              <td>Execution internal</td>
+              <td>Docker overlay network + HDFS + YARN</td>
+              <td>Per-experiment overlay <code>{stack}_cluster-network</code>. Master container hostname is literally <code>master</code>.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="mental-model">
+        <h2>A mental model that holds up</h2>
+        <p>
+          If you remember nothing else from this page, remember this:
+        </p>
+        <div class="callout tip">
+          <span class="label">The model</span>
+          <p style="margin: 0.4rem 0 0;">
+            PICARD is a <strong>web app that runs bash scripts</strong>.
+            The frontend is a thin shell over the backend. The backend is a
+            REST API plus a single-threaded queue worker. The queue worker's
+            entire job is to call a bash script with the right arguments.
+            That bash script is what actually orchestrates the cluster &mdash;
+            everything Docker- and Spark-related lives there, not in C#.
+          </p>
+        </div>
+        <p>
+          Once you internalize that, most of the system's behavior makes
+          sense:
+        </p>
+        <ul>
+          <li>
+            <strong>Why is execution sequential?</strong> Because the worker
+            count is 1, and the <code>DockerSwarm</code> service rewrites a
+            shared <code>Dockerfile</code> per experiment &mdash; running two
+            at once would race on that file.
+          </li>
+          <li>
+            <strong>Why does cleanup fail open and need
+            <code>docker system prune</code>?</strong> Because the cleanup
+            path is a bash script with a 30-second timeout, not a transactional
+            teardown.
+          </li>
+          <li>
+            <strong>Why does the backend not get notified when a job
+            finishes?</strong> Because there is no callback &mdash; the
+            backend just waits on the subprocess and reads the result file
+            from disk.
+          </li>
+          <li>
+            <strong>Why is the parameter format for algorithms positional and
+            sorted by <code>DriverIndex</code>?</strong> Because the bash
+            script passes them as <code>$1 $2 $3 ...</code> to
+            <code>spark-submit</code>.
+          </li>
+        </ul>
+        <p>
+          Each layer has its own deep-dive page. Start with whichever one is
+          closest to the work you've been asked to do.
+        </p>
+      </section>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    PICARD Onboarding Portal &middot; v0.2 draft &middot; PICARD 2026.08 team
+  </footer>
+</body>
+</html>

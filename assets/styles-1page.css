@@ -1,0 +1,579 @@
+/* =========================================================================
+   PICARD Poster — 1-page version (3000 × 4500 portrait)
+   WVU Palette: Blue #002855, Gold #EAAA00
+   ========================================================================= */
+
+:root {
+  --wvu-blue: #002855;
+  --wvu-blue-deep: #001a3a;
+  --wvu-blue-hi: #1a4076;
+  --wvu-gold: #EAAA00;
+  --wvu-gold-deep: #c48f00;
+  --wvu-gold-soft: #fff5d1;
+  --ink: #0f1822;
+  --ink-soft: #2a3847;
+  --paper: #ffffff;
+  --paper-warm: #fbf7ee;
+  --rule: #d7dce3;
+  --rule-soft: #eceff4;
+
+  --poster-w: 3000px;
+  --poster-h: 4500px;
+  --side-pad: 60px;
+  --col-gap: 42px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #3a3f47;
+  color: var(--ink);
+  font-family: "Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* -------------------------------------------------------------------------
+   Poster surface
+   ------------------------------------------------------------------------- */
+.poster {
+  width: var(--poster-w);
+  height: var(--poster-h);
+  background: var(--paper);
+  position: relative;
+  overflow: hidden;
+  background-image:
+    linear-gradient(180deg, #ffffff 0%, #fbfcfd 60%, #f3f6fa 100%);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* -------------------------------------------------------------------------
+   Header band
+   ------------------------------------------------------------------------- */
+.poster-header {
+  position: relative;
+  flex: 0 0 auto;
+  height: 440px;
+  width: 100%;
+  background: linear-gradient(135deg, var(--wvu-blue-deep) 0%, var(--wvu-blue) 55%, var(--wvu-blue-hi) 100%);
+  color: #fff;
+  padding: 40px 70px;
+  display: grid;
+  grid-template-columns: 720px 1fr 800px;
+  align-items: center;
+  border-bottom: 16px solid var(--wvu-gold);
+}
+.poster-header::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0;
+  bottom: -4px;
+  height: 4px;
+  background: linear-gradient(90deg, var(--wvu-gold-deep), var(--wvu-gold) 50%, var(--wvu-gold-deep));
+  opacity: 0.9;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+.wvu-mark {
+  width: 240px;
+  height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+.wvu-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.header-course { line-height: 1.3; }
+.course-line:first-child {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--wvu-gold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.course-line:last-child {
+  font-size: 22px;
+  font-weight: 400;
+  color: #cfd8e4;
+  margin-top: 6px;
+}
+
+.header-title { text-align: center; }
+.header-title h1 {
+  font-size: 200px;
+  margin: 0;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  text-shadow: 0 4px 0 rgba(0,0,0,0.25);
+}
+.header-title .subtitle {
+  margin-top: 18px;
+  font-size: 30px;
+  font-weight: 500;
+  color: var(--wvu-gold);
+  letter-spacing: 0.02em;
+}
+
+.header-right { text-align: right; line-height: 1.3; }
+.team-label {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--wvu-gold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.team-names {
+  font-size: 25px;
+  margin-top: 10px;
+  color: #ffffff;
+  font-weight: 500;
+  line-height: 1.35;
+}
+.advisor {
+  font-size: 22px;
+  margin-top: 8px;
+  color: #cfd8e4;
+  font-style: italic;
+}
+
+/* -------------------------------------------------------------------------
+   Body layout
+   ------------------------------------------------------------------------- */
+.body {
+  flex: 0 0 auto;
+  padding: 48px var(--side-pad) 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 42px;
+}
+
+.hero-row { flex: 0 0 auto; }
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--col-gap);
+  align-items: start;
+}
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+/* -------------------------------------------------------------------------
+   Card primitive
+   ------------------------------------------------------------------------- */
+.card {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-top: 12px solid var(--wvu-blue);
+  border-radius: 10px;
+  padding: 40px 44px 42px;
+  box-shadow: 0 2px 10px rgba(0, 40, 85, 0.06);
+}
+.card h2 {
+  margin: 0 0 26px 0;
+  color: var(--wvu-blue);
+  font-size: 66px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+  border-bottom: 4px solid var(--wvu-gold);
+  padding-bottom: 16px;
+}
+.card p, .card li {
+  font-size: 32px;
+  line-height: 1.44;
+  color: var(--ink);
+  margin: 0 0 18px 0;
+}
+.card p:last-child { margin-bottom: 0; }
+.card code {
+  font-family: "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  background: var(--rule-soft);
+  color: var(--wvu-blue-deep);
+  padding: 0 6px;
+  border-radius: 4px;
+  font-size: 0.92em;
+}
+.card-sub {
+  font-size: 26px !important;
+  color: var(--ink-soft);
+  font-style: italic;
+  margin-bottom: 16px !important;
+}
+
+/* -------------------------------------------------------------------------
+   Lists
+   ------------------------------------------------------------------------- */
+.tick-list { list-style: none; padding: 0; margin: 12px 0 0; }
+.tick-list li {
+  position: relative;
+  padding-left: 52px;
+  margin-bottom: 18px;
+}
+.tick-list li::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 16px;
+  width: 28px;
+  height: 28px;
+  background: var(--wvu-gold);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 5px var(--wvu-blue);
+}
+.tick-list li:last-child { margin-bottom: 0; }
+.tick-list.tick-compact li {
+  margin-bottom: 14px;
+  padding-left: 46px;
+  font-size: 28px;
+}
+.tick-list.tick-compact li::before {
+  width: 24px;
+  height: 24px;
+  top: 15px;
+  box-shadow: inset 0 0 0 4px var(--wvu-blue);
+}
+
+/* -------------------------------------------------------------------------
+   Background callout
+   ------------------------------------------------------------------------- */
+.callout {
+  margin-top: 22px;
+  padding: 24px 28px;
+  background: var(--wvu-blue);
+  color: #fff;
+  border-radius: 8px;
+  border-left: 16px solid var(--wvu-gold);
+}
+.callout-label {
+  font-size: 22px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--wvu-gold);
+  margin-bottom: 8px;
+}
+.callout-body {
+  font-size: 30px;
+  line-height: 1.36;
+  font-weight: 500;
+}
+
+/* -------------------------------------------------------------------------
+   Architecture diagram
+   ------------------------------------------------------------------------- */
+.arch-diagram {
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+  gap: 6px;
+}
+.arch-layer {
+  padding: 26px 30px;
+  border-radius: 8px;
+  color: #fff;
+}
+.arch-layer-title {
+  font-size: 38px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+.arch-layer-body {
+  font-size: 28px;
+  line-height: 1.4;
+  margin-top: 10px;
+  color: #f1f5fb;
+}
+.arch-layer-body code { background: rgba(255,255,255,0.18); color: #fff; }
+.layer-pres { background: linear-gradient(120deg, #1a4076, #002855); }
+.layer-app  { background: linear-gradient(120deg, #002855, #001a3a); }
+.layer-exec { background: linear-gradient(120deg, #c48f00, #EAAA00); color: var(--wvu-blue-deep); }
+.layer-exec .arch-layer-body { color: var(--wvu-blue-deep); }
+.layer-exec .arch-layer-body code { background: rgba(0, 40, 85, 0.12); color: var(--wvu-blue-deep); }
+.arch-arrow {
+  align-self: center;
+  color: var(--wvu-gold-deep);
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1;
+}
+.pipeline-mini {
+  margin-top: 18px;
+  padding: 14px 12px;
+  background: var(--paper-warm);
+  border: 1.5px dashed var(--wvu-gold-deep);
+  border-radius: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+}
+.pl-stage {
+  background: var(--wvu-blue);
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 5px;
+  font-size: 22px;
+  font-weight: 600;
+}
+.pl-arrow {
+  color: var(--wvu-blue);
+  font-weight: 900;
+  font-size: 24px;
+}
+
+/* -------------------------------------------------------------------------
+   Hero (Spring 2026 Focus) - full width
+   ------------------------------------------------------------------------- */
+.card-hero {
+  border-top: 14px solid var(--wvu-gold);
+  background: linear-gradient(180deg, #ffffff 0%, #fff9e4 100%);
+  padding: 40px 52px 44px;
+}
+.card-hero h2 {
+  color: var(--wvu-blue-deep);
+  font-size: 74px;
+  margin-bottom: 0;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.hero-head {
+  display: grid;
+  grid-template-columns: 720px 1fr;
+  gap: 40px;
+  align-items: center;
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 3px solid var(--wvu-blue);
+}
+.hero-head h2 { white-space: nowrap; }
+.hero-lede {
+  font-size: 32px !important;
+  line-height: 1.42 !important;
+  color: var(--ink) !important;
+  margin: 0 !important;
+}
+.focus-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 26px;
+}
+.focus-cell {
+  background: #fff;
+  border: 1px solid var(--rule);
+  border-left: 14px solid var(--wvu-blue);
+  border-radius: 6px;
+  padding: 22px 26px;
+}
+.focus-num {
+  font-size: 68px;
+  font-weight: 900;
+  color: var(--wvu-gold);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.focus-title {
+  font-size: 40px;
+  font-weight: 800;
+  color: var(--wvu-blue);
+  margin-top: 10px;
+}
+.focus-body {
+  font-size: 26px;
+  line-height: 1.34;
+  color: var(--ink-soft);
+  margin-top: 12px;
+}
+
+/* -------------------------------------------------------------------------
+   Limitations grid
+   ------------------------------------------------------------------------- */
+.card-warning { border-top-color: var(--wvu-gold-deep); }
+.card-warning h2 { color: var(--wvu-blue); }
+.limit-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 20px;
+  margin-top: 12px;
+}
+.limit-cell {
+  background: #fff;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 20px 24px;
+  border-left: 12px solid var(--wvu-gold);
+}
+.limit-head {
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--wvu-blue-deep);
+  margin-bottom: 10px;
+}
+.limit-body {
+  font-size: 26px;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+
+/* -------------------------------------------------------------------------
+   Going Forward blocks
+   ------------------------------------------------------------------------- */
+.forward-block {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--rule-soft);
+}
+.forward-block:first-of-type {
+  margin-top: 10px;
+  padding-top: 0;
+  border-top: 0;
+}
+.forward-head {
+  font-size: 38px;
+  font-weight: 800;
+  color: var(--wvu-blue-deep);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.pill {
+  display: inline-block;
+  padding: 5px 16px;
+  border-radius: 50px;
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.pill-gold { background: var(--wvu-gold); color: var(--wvu-blue-deep); }
+.pill-blue { background: var(--wvu-blue); color: var(--wvu-gold); }
+
+/* Origin card (right column) — subtle tonal variant */
+.card-origin {
+  background: linear-gradient(180deg, #ffffff 0%, #fff9e4 100%);
+  border-top-color: var(--wvu-gold);
+}
+.card-origin h2 { color: var(--wvu-blue-deep); }
+
+/* -------------------------------------------------------------------------
+   QR card
+   ------------------------------------------------------------------------- */
+.qr-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f5f8fd 100%);
+  border-top-color: var(--wvu-gold) !important;
+}
+.qr-row {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 36px;
+  align-items: center;
+  margin-top: 6px;
+}
+.qr-box {
+  background: #fff;
+  padding: 14px;
+  border: 10px solid var(--wvu-blue);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.qr-box img {
+  width: 100%;
+  height: auto;
+  display: block;
+  image-rendering: pixelated;
+}
+.qr-body .qr-kicker {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--wvu-blue);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 10px;
+}
+.qr-body .qr-lead {
+  font-size: 26px !important;
+  line-height: 1.4 !important;
+  color: var(--ink);
+  margin: 0 0 16px 0 !important;
+}
+.qr-body .qr-url {
+  display: inline-block;
+  background: var(--wvu-blue);
+  color: var(--wvu-gold);
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+}
+
+/* -------------------------------------------------------------------------
+   Footer band
+   ------------------------------------------------------------------------- */
+.poster-footer {
+  flex: 0 0 auto;
+  margin-top: auto;
+  height: 120px;
+  background: linear-gradient(135deg, var(--wvu-blue-deep) 0%, var(--wvu-blue) 100%);
+  border-top: 10px solid var(--wvu-gold);
+  color: #fff;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: center;
+  padding: 0 70px;
+}
+.footer-left { text-align: left; }
+.footer-mark {
+  color: var(--wvu-gold);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 36px;
+  letter-spacing: 0.02em;
+}
+.footer-title {
+  color: #fff;
+  font-weight: 900;
+  font-size: 44px;
+  letter-spacing: -0.01em;
+  margin-left: 4px;
+}
+.footer-center {
+  text-align: center;
+}
+.footer-url {
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--wvu-gold);
+  letter-spacing: -0.005em;
+}
+.footer-right {
+  text-align: right;
+  font-size: 24px;
+  color: #cfd8e4;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}

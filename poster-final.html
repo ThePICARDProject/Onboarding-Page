@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PICARD Poster — 1 page (3000 × 4500)</title>
+  <link rel="stylesheet" href="assets/styles-1page.css">
+</head>
+<body>
+  <div class="poster">
+
+    <!-- ============================ HEADER ============================ -->
+    <header class="poster-header">
+      <div class="header-left">
+        <div class="wvu-mark">
+          <img src="assets/wvu-logo.png" alt="West Virginia University">
+        </div>
+        <div class="header-course">
+          <div class="course-line">Lane Dept. of Computer Science &amp; Electrical Engineering</div>
+          <div class="course-line">CSEE 481 &middot; Spring 2026 &middot; Capstone Group 2026.08</div>
+        </div>
+      </div>
+      <div class="header-title">
+        <h1>The PICARD</h1>
+        <div class="subtitle">Platform for Intelligent Computer Algorithm Research &amp; Development</div>
+      </div>
+      <div class="header-right">
+        <div class="team-label">Contributors</div>
+        <div class="team-names">Conor Quinlan &middot; Tyler Soden &middot; Michael Solomon<br>Chris Jones &middot; Tyler Wright</div>
+        <div class="advisor">Advisor: Dr. Thomas Devine</div>
+        <div class="advisor">github.com/ThePICARDProject</div>
+      </div>
+    </header>
+
+    <!-- ============================ BODY ============================ -->
+    <div class="body">
+
+      <!-- ============= HERO ============= -->
+      <section class="hero-row">
+        <article class="card card-hero">
+          <div class="hero-head">
+            <h2>Spring 2026 Focus</h2>
+            <p class="hero-lede">
+              PICARD works &mdash; onboarding is the bottleneck. This semester we
+              <strong>lower the barrier to entry</strong> for the next team, researcher, and collaborator.
+            </p>
+          </div>
+          <div class="focus-grid">
+            <div class="focus-cell">
+              <div class="focus-num">01</div>
+              <div class="focus-title">Documentation</div>
+              <div class="focus-body">One onboarding portal to replace scattered tribal knowledge.</div>
+            </div>
+            <div class="focus-cell">
+              <div class="focus-num">02</div>
+              <div class="focus-title">Reliability</div>
+              <div class="focus-body">Graceful shutdown &mdash; no more orphaned namenodes.</div>
+            </div>
+            <div class="focus-cell">
+              <div class="focus-num">03</div>
+              <div class="focus-title">Concurrency</div>
+              <div class="focus-body">Parallel experiments without clobbering user files.</div>
+            </div>
+            <div class="focus-cell">
+              <div class="focus-num">04</div>
+              <div class="focus-title">Python&nbsp;3</div>
+              <div class="focus-body">Modern ML libraries, unblocked from legacy glibc.</div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <!-- ============= TWO-COLUMN BODY ============= -->
+      <section class="two-col">
+
+        <!-- ===== LEFT COLUMN ===== -->
+        <div class="col col-left">
+
+          <article class="card">
+            <h2>Background</h2>
+            <p>
+              PICARD lets WVU researchers run machine-learning experiments on a
+              dedicated Hadoop/Spark cluster without wiring up distributed
+              infrastructure themselves. Upload an algorithm and dataset, pick
+              parameters, hit submit &mdash; the platform handles auth, queueing,
+              distributed execution, and result delivery.
+            </p>
+            <div class="callout">
+              <div class="callout-label">Mission</div>
+              <div class="callout-body">
+                Make distributed Big-Data experimentation accessible to any WVU
+                researcher &mdash; regardless of systems background.
+              </div>
+            </div>
+          </article>
+
+          <article class="card">
+            <h2>System Architecture</h2>
+            <div class="arch-diagram">
+              <div class="arch-layer layer-pres">
+                <div class="arch-layer-title">Presentation &middot; React + Vite</div>
+                <div class="arch-layer-body">
+                  SPA on port <code>5173</code>. Google SSO gated to
+                  <code>@mix.wvu.edu</code>. Uploads, config, live logs.
+                </div>
+              </div>
+              <div class="arch-arrow">&darr;</div>
+              <div class="arch-layer layer-app">
+                <div class="arch-layer-title">Application &middot; .NET 8 API</div>
+                <div class="arch-layer-body">
+                  Port <code>5080</code>. Auth, MySQL persistence, experiment
+                  queue, and cluster orchestration.
+                </div>
+              </div>
+              <div class="arch-arrow">&darr;</div>
+              <div class="arch-layer layer-exec">
+                <div class="arch-layer-title">Execution &middot; Docker Swarm</div>
+                <div class="arch-layer-body">
+                  HDFS + YARN + Spark. One fresh cluster per submission &mdash;
+                  no cross-experiment state.
+                </div>
+              </div>
+            </div>
+            <div class="pipeline-mini">
+              <span class="pl-stage">Browser</span>
+              <span class="pl-arrow">&rarr;</span>
+              <span class="pl-stage">React</span>
+              <span class="pl-arrow">&rarr;</span>
+              <span class="pl-stage">.NET API</span>
+              <span class="pl-arrow">&rarr;</span>
+              <span class="pl-stage">Queue</span>
+              <span class="pl-arrow">&rarr;</span>
+              <span class="pl-stage">Swarm</span>
+              <span class="pl-arrow">&rarr;</span>
+              <span class="pl-stage">Spark</span>
+              <span class="pl-arrow">&rarr;</span>
+              <span class="pl-stage">Result</span>
+            </div>
+          </article>
+
+          <article class="card">
+            <h2>Current Capabilities</h2>
+            <ul class="tick-list">
+              <li><strong>End-to-end web workflow</strong> &mdash; upload, configure, and run distributed experiments from the browser.</li>
+              <li><strong>WVU-gated Google SSO</strong> restricts access to <code>@mix.wvu.edu</code>.</li>
+              <li><strong>Spark-on-Hadoop</strong> execution across a dedicated Docker Swarm cluster.</li>
+              <li><strong>Batch parameters</strong> &mdash; one algorithm, many parameter values, run sequentially.</li>
+              <li><strong>Scala + Python&nbsp;2.7</strong> execution paths; <strong>live logs</strong> stream to the browser.</li>
+            </ul>
+          </article>
+
+          <article class="card">
+            <h2>Fall 2025 Handoff</h2>
+            <p class="card-sub">Delivered by the preceding 481S cohort &mdash; the foundation we build on:</p>
+            <ul class="tick-list tick-compact">
+              <li><strong>Python&nbsp;2.7 execution path</strong> added to the Spark / Docker layers alongside the original Scala pipeline.</li>
+              <li><strong>Public-facing frontend</strong> reachable without an SSH gateway tunnel.</li>
+              <li><strong>Streamlined submission flow</strong> &mdash; simpler upload and execution, plus preliminary user docs.</li>
+              <li><strong>Hardened backend onboarding</strong> &mdash; credentials and cluster-access cleanup.</li>
+            </ul>
+          </article>
+
+        </div>
+
+        <!-- ===== RIGHT COLUMN ===== -->
+        <div class="col col-right">
+
+          <article class="card card-warning">
+            <h2>Known Limitations</h2>
+            <div class="limit-grid">
+              <div class="limit-cell">
+                <div class="limit-head">Documentation gaps</div>
+                <div class="limit-body">Operational knowledge lives in graduates' heads &mdash; double-hop SSH, hand-crafted dotnet starts.</div>
+              </div>
+              <div class="limit-cell">
+                <div class="limit-head">Single-experiment execution</div>
+                <div class="limit-body">Concurrent runs can delete another user's uploaded files &mdash; artefacts vanish.</div>
+              </div>
+              <div class="limit-cell">
+                <div class="limit-head">Ungraceful failure</div>
+                <div class="limit-body">Crashed experiments orphan namenodes. Only known fix: <code>docker system prune</code>.</div>
+              </div>
+              <div class="limit-cell">
+                <div class="limit-head">Long feedback loops</div>
+                <div class="limit-body">Misconfigured algorithms take ~5 min to fail &mdash; after the Swarm stands up a full cluster.</div>
+              </div>
+              <div class="limit-cell">
+                <div class="limit-head">Python version ceiling</div>
+                <div class="limit-body">The container's glibc pins Python at 2.7; modern ML libraries won't install.</div>
+              </div>
+              <div class="limit-cell">
+                <div class="limit-head">Locked container state</div>
+                <div class="limit-body">A graduated student password-locked the core image. <code>exec</code> access requires a full rebuild.</div>
+              </div>
+            </div>
+          </article>
+
+          <article class="card">
+            <h2>Going Forward</h2>
+            <p class="card-sub">
+              Fall&nbsp;2026 attacks onboarding on two fronts: a first-class
+              documentation portal for newcomers, and backend hardening so the
+              system behaves predictably while they learn it.
+            </p>
+
+            <div class="forward-block">
+              <div class="forward-head"><span class="pill pill-gold">DOC</span> Onboarding Portal</div>
+              <ul class="tick-list tick-compact">
+                <li>Three-layer architecture walkthrough with per-layer deep dives.</li>
+                <li>Cold-start setup guide: SSH approval, <code>ssh.wvu.edu</code> tunnelling, starting the .NET backend.</li>
+                <li>Canonical troubleshooting reference &mdash; retiring folklore.</li>
+                <li>Published under <code>ThePICARDProject</code> to outlive any single cohort.</li>
+              </ul>
+            </div>
+
+            <div class="forward-block">
+              <div class="forward-head"><span class="pill pill-blue">BE</span> Backend Hardening</div>
+              <ul class="tick-list tick-compact">
+                <li>Graceful teardown of Spark / Hadoop services on crash.</li>
+                <li>Upgrade execution container to <strong>Python&nbsp;3</strong> with modern ML libraries.</li>
+                <li>Isolate per-user file storage so concurrent runs don't evict each other.</li>
+                <li>Submission-time parameter validation &mdash; fail fast, not after a 5-minute Swarm boot.</li>
+              </ul>
+            </div>
+
+            <div class="forward-block">
+              <div class="forward-head"><span class="pill pill-blue">FE</span> Frontend Polish</div>
+              <ul class="tick-list tick-compact">
+                <li>Structured error indicators on experiment failure; harden session handling, CSRF, and SSO token lifetime on the public deployment.</li>
+              </ul>
+            </div>
+          </article>
+
+          <article class="card card-origin">
+            <h2>Origin &mdash; CoDRIFt</h2>
+            <p>
+              PICARD grew out of Dr. Devine's thesis on <strong>CoDRIFt</strong>
+              &mdash; a Co-Training, Distributed, Random Incremental Forest tuned
+              for rare-event detection (e.g.&nbsp;pulsars in radio-telescope records).
+            </p>
+            <p>
+              Running CoDRIFt once required stringing together 20+ desktop PCs by
+              hand. PICARD productises that experience &mdash; and is
+              algorithm-agnostic today. Any Scala JAR or Python script can run.
+            </p>
+          </article>
+
+          <article class="card qr-card">
+            <h2>Onboarding Portal</h2>
+            <div class="qr-row">
+              <div class="qr-box">
+                <img src="assets/qr-onboarding.png" alt="QR code to PICARD onboarding portal">
+              </div>
+              <div class="qr-body">
+                <div class="qr-kicker">Scan to explore</div>
+                <p class="qr-lead">
+                  Architecture walkthroughs, per-layer deep dives, and a cold-start
+                  setup guide for the next cohort &mdash; published under
+                  <code>ThePICARDProject</code>.
+                </p>
+                <span class="qr-url">thepicardproject.github.io/Onboarding-Page/</span>
+              </div>
+            </div>
+          </article>
+
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ============================ FOOTER ============================ -->
+    <footer class="poster-footer">
+      <div class="footer-left">
+        <span class="footer-mark">the</span><span class="footer-title">PICARD</span>
+      </div>
+      <div class="footer-center">
+        <span class="footer-url">thepicardproject.github.io/Onboarding-Page/</span>
+      </div>
+      <div class="footer-right">
+        CSEE 481 &middot; Capstone Group 2026.08 &middot; Spring 2026
+      </div>
+    </footer>
+
+  </div>
+</body>
+</html>

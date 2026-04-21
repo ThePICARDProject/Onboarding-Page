@@ -156,7 +156,7 @@ html, body {
    ------------------------------------------------------------------------- */
 .body {
   flex: 0 0 auto;
-  padding: 48px var(--side-pad) 56px;
+  padding: 48px var(--side-pad) 156px;
   display: flex;
   flex-direction: column;
   gap: 42px;
@@ -305,9 +305,8 @@ html, body {
 .arch-layer-body code { background: rgba(255,255,255,0.18); color: #fff; }
 .layer-pres { background: linear-gradient(120deg, #1a4076, #002855); }
 .layer-app  { background: linear-gradient(120deg, #002855, #001a3a); }
-.layer-exec { background: linear-gradient(120deg, #c48f00, #EAAA00); color: var(--wvu-blue-deep); }
-.layer-exec .arch-layer-body { color: var(--wvu-blue-deep); }
-.layer-exec .arch-layer-body code { background: rgba(0, 40, 85, 0.12); color: var(--wvu-blue-deep); }
+.layer-exec { background: linear-gradient(120deg, #001a3a, #000d1f); }
+.layer-exec .arch-layer-body code { background: rgba(0, 40, 85, 0.12); }
 .arch-arrow {
   align-self: center;
   color: var(--wvu-gold-deep);
@@ -531,11 +530,48 @@ html, body {
 }
 
 /* -------------------------------------------------------------------------
+   Parameter Sweep architecture steps
+   ------------------------------------------------------------------------- */
+.sweep-step-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 20px;
+  margin-top: 12px;
+}
+.sweep-step {
+  background: #fff;
+  border: 1px solid var(--rule);
+  border-left: 12px solid var(--wvu-blue);
+  border-radius: 6px;
+  padding: 20px 24px;
+}
+.sweep-step-num {
+  font-size: 40px;
+  font-weight: 900;
+  color: var(--wvu-gold);
+  line-height: 1;
+}
+.sweep-step-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--wvu-blue-deep);
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+.sweep-step-body {
+  font-size: 25px;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+
+/* -------------------------------------------------------------------------
    Footer band
    ------------------------------------------------------------------------- */
 .poster-footer {
-  flex: 0 0 auto;
-  margin-top: auto;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
   height: 120px;
   background: linear-gradient(135deg, var(--wvu-blue-deep) 0%, var(--wvu-blue) 100%);
   border-top: 10px solid var(--wvu-gold);

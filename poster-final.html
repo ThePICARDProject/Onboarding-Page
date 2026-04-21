@@ -159,7 +159,7 @@
               <li><strong>WVU-gated Google SSO</strong> restricts access to <code>@mix.wvu.edu</code>.</li>
               <li><strong>Spark-on-Hadoop</strong> execution across a dedicated Docker Swarm cluster.</li>
               <li><strong>Batch parameters:</strong> one algorithm, many parameter values, run sequentially.</li>
-              <li><strong>Scala + Python&nbsp;2.7</strong> execution paths; <strong>live logs</strong> stream to the browser.</li>
+              <li><strong>Scala + Python&nbsp;3</strong> execution paths; <strong>live logs</strong> stream to the browser.</li>
             </ul>
           </article>
 
@@ -167,7 +167,8 @@
             <h2>Spring 2026 Handoff</h2>
             <p class="card-sub">Delivered by the preceding 481S cohort, the foundation we build on:</p>
             <ul class="tick-list tick-compact">
-              <li><strong>Python&nbsp;2.7 execution path</strong> added to the Spark / Docker layers alongside the original Scala pipeline.</li>
+              <li><strong>Python&nbsp;3 migration:</strong> execution layer moved off legacy Python&nbsp;2.7, unblocking modern ML libraries on the Spark / Docker path.</li>
+              <li><strong>Graceful cluster shutdown:</strong> Hadoop and Spark services tear down cleanly after each experiment, retiring the old <code>docker system prune</code> workaround.</li>
               <li><strong>Public-facing frontend</strong> reachable without an SSH gateway tunnel.</li>
               <li><strong>Streamlined submission flow:</strong> simpler upload and execution, plus preliminary user docs.</li>
               <li><strong>Hardened backend onboarding:</strong> credentials and cluster-access cleanup.</li>
@@ -190,21 +191,9 @@
                 <div class="limit-head">Single-experiment execution</div>
                 <div class="limit-body">Concurrent runs can delete another user's uploaded files; artefacts vanish.</div>
               </div>
-              <div class="limit-cell">
-                <div class="limit-head">Ungraceful failure</div>
-                <div class="limit-body">Crashed experiments orphan namenodes. Only known fix: <code>docker system prune</code>.</div>
-              </div>
-              <div class="limit-cell">
+              <div class="limit-cell" style="grid-column: span 2;">
                 <div class="limit-head">Long feedback loops</div>
                 <div class="limit-body">Misconfigured algorithms take ~5 min to fail: the Swarm must stand up a full cluster first.</div>
-              </div>
-              <div class="limit-cell">
-                <div class="limit-head">Python version ceiling</div>
-                <div class="limit-body">The container's glibc pins Python at 2.7; modern ML libraries won't install.</div>
-              </div>
-              <div class="limit-cell">
-                <div class="limit-head">Locked container state</div>
-                <div class="limit-body">A graduated student password-locked the core image. <code>exec</code> access requires a full rebuild.</div>
               </div>
             </div>
           </article>

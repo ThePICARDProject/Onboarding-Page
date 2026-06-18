@@ -366,6 +366,18 @@ main.content li { margin: 0.3rem 0; }
   font-weight: 600;
 }
 
+/* Inline pill for PLACEHOLDER / status notes inside table cells */
+.callout-inline {
+  display: inline-block;
+  background: var(--panel-2);
+  border: 1px solid var(--warn);
+  border-radius: 999px;
+  padding: 0.05rem 0.55rem;
+  font-size: 0.78rem;
+  color: var(--warn);
+  font-weight: 600;
+}
+
 /* ============ Step list (numbered, big) ============ */
 
 .steps {

@@ -24,11 +24,13 @@
       <div class="label">On this page</div>
       <ul>
         <li><a href="#prereqs">Prerequisites</a></li>
-        <li><a href="#ssh-setup">SSH Setup</a></li>
-        <li><a href="#ssh-config">SSH Config</a></li>
-        <li><a href="#booting">Booting Up</a></li>
-        <li><a href="#using">Using the Site</a></li>
-        <li><a href="#experiments">Running Experiments</a></li>
+        <li><a href="#clone">Clone the Repo</a></li>
+        <li><a href="#env">Environment File</a></li>
+        <li><a href="#oauth">GitHub OAuth App</a></li>
+        <li><a href="#compose">Run with Docker Compose</a></li>
+        <li><a href="#ports">Ports</a></li>
+        <li><a href="#dev">Local Dev (No Docker)</a></li>
+        <li><a href="#ssh">SSH Gateway Access</a></li>
         <li><a href="#resources">Resources</a></li>
       </ul>
     </aside>
@@ -37,175 +39,173 @@
       <section>
         <h1>Setup</h1>
         <p class="lead">
-          Everything you need to go from a fresh laptop to a running PICARD
-          frontend connected to the production backend.
+          How to go from a fresh clone to a running PICARD new-generation stack
+          (Django + React + Celery + Spark) via Docker Compose.
         </p>
+        <div class="callout tip">
+          <span class="label">New generation</span>
+          <p style="margin: 0.4rem 0 0;">
+            These instructions target <code>picard_new_generation</code>. They
+            replace the old <code>481-FrontEnd</code> + <code>dotnet run</code>
+            flow. The whole stack now comes up with one
+            <code>docker compose up</code>.
+          </p>
+        </div>
       </section>
 
       <section id="prereqs">
         <h2>Prerequisites</h2>
-        <p>Before you can run anything, you'll need:</p>
         <ul>
-          <li>An approved WVU SSH gateway account (your <code>&lt;username&gt;@ssh.wvu.edu</code>)</li>
-          <li>An account on the PICARD server (Dr. Devine or a team member can create one)</li>
-          <li>Membership in the <a href="https://github.com/ThePICARDProject">ThePICARDProject</a> GitHub organization</li>
-          <li><code>npm</code> installed locally (for the frontend)</li>
-          <li>Chrome (the frontend was designed against Chrome &mdash; Firefox tends to throw CORS errors)</li>
+          <li><strong>Docker</strong> and <strong>Docker Compose</strong> (the supported way to run everything together)</li>
+          <li>Membership in the <a href="https://github.com/ThePICARDProject">ThePICARDProject</a> GitHub org</li>
+          <li>A <strong>GitHub OAuth app</strong> (for login &mdash; see below)</li>
+          <li>Optional, for local dev without Docker: Python 3.11+, Node/npm, a MySQL instance, and Redis</li>
         </ul>
       </section>
 
-      <section id="ssh-setup">
-        <h2>SSH Setup</h2>
+      <section id="clone">
+        <h2>Clone the repo</h2>
+        <pre><code>git clone git@github.com:ThePICARDProject/picard_new_generation.git
+cd picard_new_generation/PICARD2</code></pre>
+        <p>The Compose file lives at <code>PICARD2/docker-compose.yml</code>.</p>
+      </section>
+
+      <section id="env">
+        <h2>Environment file</h2>
+        <p>
+          The backend and database read configuration from
+          <code>backend/.env</code>. Copy the template and fill it in:
+        </p>
+        <pre><code>cp backend/.env.example backend/.env</code></pre>
+        <table>
+          <thead><tr><th>Variable</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>DJANGO_SECRET_KEY</code></td><td>Django secret &mdash; set a real value</td></tr>
+            <tr><td><code>DEBUG</code></td><td><code>True</code> for local dev</td></tr>
+            <tr><td><code>ALLOWED_HOSTS</code></td><td>Comma-separated hosts (default covers localhost)</td></tr>
+            <tr><td><code>DB_NAME / DB_USER / DB_PASSWORD</code></td><td>MySQL credentials (<code>DB_HOST=db</code> in Compose)</td></tr>
+            <tr><td><code>MYSQL_DATABASE / MYSQL_ROOT_PASSWORD</code></td><td>Used by the <code>db</code> container</td></tr>
+            <tr><td><code>FRONTEND_LOCAL_URL</code></td><td>Default <code>http://localhost:3000</code> (CORS/CSRF origin)</td></tr>
+            <tr><td><code>GITHUB_OAUTH_LOCAL_CLIENT_ID / _SECRET</code></td><td>From your GitHub OAuth app</td></tr>
+          </tbody>
+        </table>
+        <div class="callout warn">
+          <span class="label">Don't commit secrets</span>
+          <p style="margin: 0.4rem 0 0;">
+            <code>backend/.env</code> holds real credentials &mdash; it is
+            gitignored, keep it that way. Only <code>.env.example</code>
+            (placeholders) belongs in version control.
+          </p>
+        </div>
+      </section>
+
+      <section id="oauth">
+        <h2>GitHub OAuth app</h2>
+        <p>
+          Login uses GitHub OAuth. Create an OAuth app under your account (or
+          the org) at <em>Settings &rarr; Developer settings &rarr; OAuth Apps</em>:
+        </p>
+        <ul>
+          <li><strong>Homepage URL:</strong> <code>http://localhost:3000</code></li>
+          <li><strong>Authorization callback URL:</strong> the backend's GitHub callback (served from the Django <code>authentication</code> app)</li>
+        </ul>
+        <p>
+          Put the resulting client id/secret into
+          <code>GITHUB_OAUTH_LOCAL_CLIENT_ID</code> and
+          <code>GITHUB_OAUTH_LOCAL_CLIENT_SECRET</code> in
+          <code>backend/.env</code>. The requested scope is
+          <code>read:user user:email read:org</code>.
+        </p>
+      </section>
+
+      <section id="compose">
+        <h2>Run with Docker Compose</h2>
+        <pre><code>cd PICARD2
+docker compose up --build</code></pre>
+        <p>This brings up every service. On start, the backend container runs <code>python manage.py migrate</code> automatically, then the dev server. The services are:</p>
+        <ul>
+          <li><code>db</code> (MySQL), <code>redis</code> (Celery broker)</li>
+          <li><code>backend</code> (Django API), <code>celery_worker</code> (runs experiments)</li>
+          <li><code>frontend</code> (React via nginx)</li>
+          <li><code>spark-master</code> + <code>spark-worker</code> (the Spark cluster)</li>
+        </ul>
+        <p>To stop: <code>docker compose down</code> (add <code>-v</code> to also drop the MySQL volume).</p>
+      </section>
+
+      <section id="ports">
+        <h2>Ports</h2>
+        <table>
+          <thead><tr><th>Service</th><th>Host port</th><th>What it is</th></tr></thead>
+          <tbody>
+            <tr><td>frontend</td><td><code>3000</code></td><td>The app &mdash; start here</td></tr>
+            <tr><td>backend</td><td><code>5000</code></td><td>Django REST API</td></tr>
+            <tr><td>db (MySQL)</td><td><code>3307</code> (<code>MYSQL_PORT</code>)</td><td>Database</td></tr>
+            <tr><td>spark-master UI</td><td><code>8080</code></td><td>Spark master web UI</td></tr>
+            <tr><td>spark-worker UI</td><td><code>8081</code></td><td>Spark worker web UI</td></tr>
+          </tbody>
+        </table>
+        <p>Open <a href="http://localhost:3000">http://localhost:3000</a> and sign in with GitHub.</p>
+      </section>
+
+      <section id="dev">
+        <h2>Local dev without Docker (optional)</h2>
+        <p>If you want to iterate on one piece without the full stack:</p>
+        <h3>Backend</h3>
+        <pre><code>cd backend
+python -m venv venv &amp;&amp; source venv/bin/activate
+pip install -r requirements.txt
+# point DB_HOST at a reachable MySQL, then:
+python manage.py migrate
+python manage.py runserver</code></pre>
+        <p>You'll also need Redis and a Celery worker for experiment execution:</p>
+        <pre><code>celery -A backend_config worker --loglevel=info --concurrency=1</code></pre>
+        <h3>Frontend</h3>
+        <pre><code>cd frontend
+npm install
+npm run dev      # Vite dev server
+npm run build    # production build</code></pre>
+        <p>Set <code>VITE_API_BASE_URL</code> so the SPA can reach the API.</p>
+      </section>
+
+      <section id="ssh">
+        <h2>SSH gateway access (deployed environment)</h2>
+        <p>
+          To reach PICARD hardware behind the WVU network you still go through
+          the SSH gateway. (This part is unchanged from the old gen.)
+        </p>
         <ol class="steps">
           <li>
             <strong>Request gateway access.</strong>
-            Submit the <a href="https://wvu.atlassian.net/servicedesk/customer/portal/5/create/638?src=182487431">WVU service desk form</a>.
-            Use <code>157.182.194.132</code> as the destination IP.
+            Submit the <a href="https://wvu.atlassian.net/servicedesk/customer/portal/5/create/638?src=182487431">WVU service desk form</a>;
+            use <code>157.182.194.132</code> as the destination IP.
           </li>
           <li>
             <strong>Verify gateway access.</strong>
             <pre><code>ssh &lt;your-username&gt;@ssh.wvu.edu</code></pre>
           </li>
           <li>
-            <strong>Get a PICARD server account.</strong>
-            Have a team member create one for you.
-          </li>
-          <li>
-            <strong>Hop from gateway to PICARD.</strong>
+            <strong>Hop to the PICARD server</strong> (account created by a team member):
             <pre><code>ssh &lt;your-username&gt;@picard.csee.wvu.edu</code></pre>
           </li>
         </ol>
-        <p>If you're logged in, you're set up. Move on to SSH config (recommended) or jump straight to <a href="#booting">Booting Up</a>.</p>
-      </section>
-
-      <section id="ssh-config">
-        <h2>SSH Config (Optional but Recommended)</h2>
         <p>
-          Configure an identity-based jump so you can <code>ssh picard</code>
-          in one shot with the tunnel preconfigured.
+          A convenience <code>~/.ssh/config</code> with a <code>ProxyJump</code>
+          through the gateway still works &mdash; just forward whatever port the
+          deployed service is on (the new gen frontend is <code>3000</code>, the
+          API <code>5000</code>).
         </p>
-        <ol class="steps">
-          <li>Open (or create) <code>~/.ssh/config</code>.</li>
-          <li>
-            Add the following:
-<pre><code>Host gateway
-    HostName ssh.wvu.edu
-    Port 22
-    User &lt;your school username&gt;
-    IdentityFile ~/.ssh/id_rsa
-    LocalForward 5080 localhost:5080
-
-Host picard
-    HostName picard.csee.wvu.edu
-    User &lt;your school username&gt;
-    Port 22
-    IdentityFile ~/.ssh/id_rsa
-    ProxyJump gateway
-    LocalForward 5080 localhost:5080</code></pre>
-          </li>
-          <li>If you don't have an <code>id_rsa</code> in <code>~/.ssh/</code>, generate one: <code>ssh-keygen -t rsa</code>.</li>
-          <li>Copy your key: <code>ssh-copy-id picard</code> (you'll be prompted for passwords a few times).</li>
-          <li>Now <code>ssh picard</code> drops you straight in with port 5080 forwarded.</li>
-        </ol>
-      </section>
-
-      <section id="booting">
-        <h2>Booting Up</h2>
-        <p class="lead">
-          Get the frontend running locally and connected to the backend.
-        </p>
-        <ol class="steps">
-          <li>Clone <code>481-FrontEnd</code> to your local machine.</li>
-          <li>Install dependencies: <code>npm install</code> (and <code>npm install vite</code> if needed).</li>
-          <li>
-            From the <code>picard</code> folder (typically <code>/481-FrontEnd/picard</code>),
-            start the dev server:
-            <pre><code>npm run dev</code></pre>
-            Press <code>o + enter</code> to open the page. It will load on
-            <code>localhost:5173</code> but will <strong>not work</strong>
-            until the backend tunnel is active.
-          </li>
-          <li>
-            In another terminal, SSH into the WVU gateway with port forwarding:
-            <pre><code>ssh -L 5080:127.0.0.1:5080 &lt;username&gt;@ssh.wvu.edu</code></pre>
-            <div class="callout warn">
-              <span class="label">Heads up</span>
-              Use <code>127.0.0.1</code> rather than <code>localhost</code> &mdash;
-              some systems don't resolve <code>localhost</code> consistently.
-              If the command errors, try it again (sometimes it takes 2&ndash;3 attempts).
-            </div>
-          </li>
-          <li>
-            From the gateway, SSH to the PICARD server with the same forward:
-            <pre><code>ssh -L 5080:127.0.0.1:5080 backend@157.182.194.132</code></pre>
-            The current group username is <code>backend</code>. This may change in later semesters.
-          </li>
-          <li>
-            Verify you're in <code>/home/backend</code>:
-            <pre><code>pwd
-# if not:
-cd /home/backend</code></pre>
-          </li>
-          <li>
-            Check whether the backend is already running:
-            <pre><code>lsof -i :5080
-# or
-ps aux | grep API-backend</code></pre>
-            If you see output, you're good. If not, start it manually:
-            <pre><code>cd /home/backend/API-backend
-dotnet run</code></pre>
-            <div class="callout warn">
-              <span class="label">Warning</span>
-              The <code>dotnet</code> instance dies if the terminal closes.
-              Keep the session open while you're working.
-            </div>
-          </li>
-        </ol>
-      </section>
-
-      <section id="using">
-        <h2>Using the Site</h2>
-        <ol>
-          <li>The frontend serves on <code>localhost:5173</code>.</li>
-          <li>Click the login button. You'll be redirected to <code>localhost:5080</code> (the tunneled backend).</li>
-          <li>Sign in with a Google account ending in <code>@mix.wvu.edu</code>. Login may flake (whitepage, 404, freeze) &mdash; back out and retry; only treat it as broken after ~4 attempts.</li>
-          <li>You'll land on the main dashboard.</li>
-        </ol>
-        <div class="callout tip">
-          <span class="label">Tip</span>
-          Stale cookies from previous sessions can produce odd behavior. If
-          something looks off, clear cookies for <code>localhost</code>.
-        </div>
-      </section>
-
-      <section id="experiments">
-        <h2>Running Experiments</h2>
-        <ol>
-          <li>Click <strong>NEW EXPERIMENT</strong>.</li>
-          <li>Click <strong>+ Add New Algorithm</strong>. Use a preset from the algorithms repo while you're learning the system.</li>
-          <li>Upload a CSV as your dataset.</li>
-          <li>Pick your algorithm, configure parameters, name the experiment, and submit.</li>
-        </ol>
-        <div class="callout warn">
-          <span class="label">Reality check</span>
-          Algorithms that work locally may still fail on the cluster &mdash;
-          and you won't find out until the swarm finishes spinning up
-          (~3 minutes). Budget about 5 minutes per "is my submission valid"
-          cycle and remember that the error could be anywhere in the upload
-          chain.
-        </div>
       </section>
 
       <section id="resources">
         <h2>Resources</h2>
         <div class="cards">
           <div class="card">
-            <h3>Frontend repo</h3>
-            <p><a href="https://github.com/ThePICARDProject/481-FrontEnd">ThePICARDProject/481-FrontEnd</a></p>
+            <h3>New-gen repo</h3>
+            <p><a href="https://github.com/ThePICARDProject">ThePICARDProject/picard_new_generation</a></p>
           </div>
           <div class="card">
-            <h3>Backend repo</h3>
-            <p><a href="https://github.com/ThePICARDProject/API-backend">ThePICARDProject/API-backend</a></p>
+            <h3>Old gen (reference)</h3>
+            <p><code>API-backend</code> + <code>481-FrontEnd</code> &mdash; legacy, do not build against</p>
           </div>
           <div class="card">
             <h3>GitHub org</h3>
@@ -221,7 +221,7 @@ dotnet run</code></pre>
   </div>
 
   <footer class="site-footer">
-    PICARD Onboarding Portal &middot; v0.2 draft &middot; PICARD 2026.08 team
+    PICARD Onboarding Portal &middot; new generation (Django/React) &middot; PICARD 2026 team
   </footer>
 </body>
 </html>

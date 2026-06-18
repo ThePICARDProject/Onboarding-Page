@@ -23,15 +23,14 @@
     <aside class="subnav">
       <div class="label">On this page</div>
       <ul>
-        <li><a href="#diagram">Diagram</a></li>
         <li><a href="#stack">Tech Stack</a></li>
         <li><a href="#composition">Provider Composition</a></li>
-        <li><a href="#routes-public">Public Routes</a></li>
-        <li><a href="#routes-protected">Protected Routes</a></li>
-        <li><a href="#components">Shared Components</a></li>
+        <li><a href="#routes">Routes</a></li>
+        <li><a href="#components">Key Files</a></li>
         <li><a href="#auth">Authentication Flow</a></li>
         <li><a href="#workflow">Experiment Workflow</a></li>
-        <li><a href="#external">External Services</a></li>
+        <li><a href="#themes">Theming</a></li>
+        <li><a href="#api">Talking to the API</a></li>
       </ul>
       <div class="label">Other layers</div>
       <ul>
@@ -47,21 +46,22 @@
         <p>
           The React + Vite single-page application that users interact with.
           It owns rendering, routing, client-side validation, and the
-          authentication state &mdash; but no business logic and no
+          authentication/workspace state &mdash; but no business logic and no
           persistence.
         </p>
       </div>
 
-      <section id="diagram">
-        <h2>Diagram</h2>
-        <div class="diagram">
-          <img src="../assets/diagrams/presentation-layer.png" alt="Presentation layer architecture diagram">
-        </div>
-        <div class="diagram-caption">
-          Components, providers, routes, and the calls each page makes back to
-          the API. Source: <code>docs/preslayer/presentation-layer.png</code>.
-        </div>
-      </section>
+      <div class="callout tip">
+        <span class="label">New generation</span>
+        <p style="margin: 0.4rem 0 0;">
+          This page describes the new-gen frontend in
+          <code>picard_new_generation/PICARD2/frontend</code>. It is a
+          hand-built LCARS-themed SPA &mdash; not the old MUI/Axios/Google-OAuth
+          frontend. There is no Tailwind/MUI, no Axios, and no WebSocket; data
+          flows over plain <code>fetch</code> with session cookies, and live
+          output is polled.
+        </p>
+      </div>
 
       <section id="stack">
         <h2>Technology stack</h2>
@@ -70,33 +70,27 @@
             <tr><th>Technology</th><th>Role</th></tr>
           </thead>
           <tbody>
-            <tr><td><strong>Vite</strong></td><td>Build tool and dev server on port <code>5173</code>; proxies <code>/api/*</code> to <code>localhost:5080</code></td></tr>
-            <tr><td><strong>React 18</strong></td><td>Core UI framework (component-based SPA)</td></tr>
-            <tr><td><strong>React Router DOM v6</strong></td><td>Client-side routing &mdash; public and protected route trees</td></tr>
-            <tr><td><strong>TailwindCSS</strong></td><td>Primary utility-first CSS framework</td></tr>
-            <tr><td><strong>MUI (Material UI) v6</strong></td><td>Component library &mdash; tables, circular progress, accordions, data grid</td></tr>
-            <tr><td><strong>React Bootstrap</strong></td><td>Modal dialogs (algorithm upload, batch submit)</td></tr>
-            <tr><td><strong>Axios</strong></td><td>HTTP client &mdash; global <code>Authorization</code> header set by AuthProvider</td></tr>
-            <tr><td><strong>PapaParse</strong></td><td>Client-side CSV parsing for data visualization</td></tr>
-            <tr><td><strong>JSZip</strong></td><td>ZIP extraction for algorithm JAR uploads (reads <code>picard.json</code> metadata)</td></tr>
+            <tr><td><strong>Vite</strong></td><td>Build tool and dev server (<code>npm run dev</code> / <code>npm run build</code>)</td></tr>
+            <tr><td><strong>React</strong></td><td>Core UI framework (function components + hooks)</td></tr>
+            <tr><td><strong>React Router DOM</strong></td><td>Client-side routing &mdash; public and <code>RequireAuth</code>-gated routes</td></tr>
+            <tr><td><strong>Custom LCARS CSS</strong></td><td>Star Trek LCARS theme (<code>lcars-assets/</code>) plus an opt-in WVU Light stylesheet</td></tr>
+            <tr><td><strong>fetch + lib/api.js</strong></td><td>Thin HTTP wrapper handling CSRF, JSON/FormData bodies, and error extraction</td></tr>
           </tbody>
         </table>
         <p>
-          The frontend runs on port <strong>5173</strong> during development
-          and proxies all <code>/api/*</code> requests to the .NET backend on
-          port <strong>5080</strong>. The Vite proxy strips the
-          <code>/api</code> prefix before forwarding. The API base URL is
-          configurable via the <code>VITE_API_BASE</code> environment variable
-          (defaults to <code>/api</code>).
+          The API base URL is configured via <code>VITE_API_BASE_URL</code>.
+          Requests are sent with <code>credentials: 'include'</code> so the
+          Django session cookie rides along; mutating requests attach an
+          <code>X-CSRFToken</code> header.
         </p>
       </section>
 
       <section id="composition">
         <h2>Provider composition</h2>
         <p>
-          The entire application is wrapped in three nested providers, defined
-          in <code>App.jsx</code>. Anything inside these providers can read
-          auth, theme, or routing state without prop-drilling.
+          The app is wrapped in nested context providers in
+          <code>main.jsx</code>. Anything inside can read theme, sound, auth, or
+          workspace state without prop-drilling.
         </p>
         <table>
           <thead>
@@ -104,81 +98,64 @@
           </thead>
           <tbody>
             <tr>
-              <td><strong>AuthProvider</strong></td>
-              <td><code>components/authprovider/authprovider.jsx</code></td>
-              <td>Manages auth token in <code>localStorage</code>, sets Axios <code>Authorization</code> header globally, validates session against <code>GET /Authentication/session</code> on mount</td>
-            </tr>
-            <tr>
               <td><strong>ThemeProvider</strong></td>
-              <td><code>context/themeContext.jsx</code></td>
-              <td>Manages dark/light mode toggle, persists preference to <code>localStorage</code>, toggles <code>document.body.classList("dark")</code></td>
+              <td><code>components/theme/ThemeProvider.jsx</code></td>
+              <td>Toggles LCARS vs. WVU Light, persists to <code>localStorage</code>, sets a <code>light-theme</code> class on <code>&lt;body&gt;</code></td>
             </tr>
             <tr>
-              <td><strong>React Router</strong></td>
-              <td><code>routes.jsx</code></td>
-              <td>Route tree &mdash; splits into public (unauthenticated) and protected (authenticated) branches</td>
+              <td><strong>SoundProvider</strong></td>
+              <td><code>components/audio/SoundProvider.jsx</code></td>
+              <td>LCARS UI beeps; mute state persisted to <code>localStorage</code></td>
+            </tr>
+            <tr>
+              <td><strong>AuthProvider</strong></td>
+              <td><code>components/auth/AuthProvider.jsx</code></td>
+              <td>Tracks GitHub-OAuth session, exposes <code>login</code>/<code>logout</code> and the CSRF token</td>
+            </tr>
+            <tr>
+              <td><strong>WorkspaceProvider</strong></td>
+              <td><code>components/workspace/WorkspaceProvider.jsx</code></td>
+              <td>Owns datasets/scripts/experiments state and every API call (upload, create, run, cancel, aggregate, visualize)</td>
             </tr>
           </tbody>
         </table>
       </section>
 
-      <section id="routes-public">
-        <h2>Public routes</h2>
-        <p>These routes do not require an auth token.</p>
-        <table>
-          <thead>
-            <tr><th>Page</th><th>Route</th><th>Description</th></tr>
-          </thead>
-          <tbody>
-            <tr><td><strong>LandingPage</strong></td><td><code>/</code></td><td>ASCII art spaceship splash with a call-to-action link to login</td></tr>
-            <tr><td><strong>LoginPage</strong></td><td><code>/login</code></td><td>"Login with Mix Account" button &mdash; redirects to backend OAuth endpoint (<code>/Authentication/login</code>)</td></tr>
-            <tr><td><strong>RequestAccountPage</strong></td><td><code>/request-account</code></td><td>Email input form to request platform access</td></tr>
-            <tr><td><strong>AuthPage</strong></td><td><code>/authenticationPage</code></td><td>OAuth callback handler &mdash; parses URL params, calls <code>setToken()</code>, redirects to <code>/home</code></td></tr>
-          </tbody>
-        </table>
-      </section>
-
-      <section id="routes-protected">
-        <h2>Protected routes</h2>
+      <section id="routes">
+        <h2>Routes</h2>
         <p>
-          <code>ProtectedRoute</code> (<code>components/protectedroute/protectedroute.jsx</code>)
-          checks for a valid auth token and redirects to <code>/login</code>
-          if absent. All protected pages render inside this wrapper via
-          React Router's <code>&lt;Outlet&gt;</code>.
+          Defined in <code>App.jsx</code>. Protected routes are wrapped in
+          <code>RequireAuth</code>, which redirects unauthenticated users to the
+          landing page.
         </p>
         <table>
           <thead>
-            <tr><th>Page</th><th>Route</th><th>Description</th></tr>
+            <tr><th>Page</th><th>Route</th><th>Auth</th><th>Description</th></tr>
           </thead>
           <tbody>
-            <tr><td><strong>Home</strong></td><td><code>/home</code></td><td>Dashboard &mdash; fetches user experiments via <code>GET /api/experiment/user/getUserExperiments</code>, displays the most recent <code>ExperimentCard</code></td></tr>
-            <tr><td><strong>ExperimentCreation</strong></td><td><code>/experimentSetup</code></td><td>Algorithm and dataset selection with upload modals; navigates to parameter configuration</td></tr>
-            <tr><td><strong>ExperimentSetup</strong></td><td><code>/experiment?algorithmId=X</code></td><td>Parameter configuration (algorithm params + cluster settings), dataset assignment, single and batch experiment submission via <code>POST /api/experiment/submit</code></td></tr>
-            <tr><td><strong>QueuePage</strong></td><td><code>/queue</code></td><td>Circular progress indicator with queue position that decrements every 10 seconds</td></tr>
-            <tr><td><strong>ResultsPage</strong></td><td><code>/experiment-results</code></td><td>Polls experiment status every 1 second; WebSocket real-time log streaming (<code>ws://.../experiment/watch/{id}</code>); download output files</td></tr>
-            <tr><td><strong>DataVisualization</strong></td><td><code>/visualization</code></td><td>CSV table viewer with PapaParse parsing, MUI Table with pagination and sticky headers</td></tr>
-            <tr><td><strong>Profile</strong></td><td><code>/profile</code></td><td>User info display, full experiment history with state filtering</td></tr>
-            <tr><td><strong>Settings</strong></td><td><code>/settings</code></td><td>Theme toggle (light/dark), Google account management link</td></tr>
+            <tr><td><strong>Landing</strong></td><td><code>/</code></td><td>public</td><td>Splash + GitHub sign-in entry point</td></tr>
+            <tr><td><strong>About</strong></td><td><code>/about</code></td><td>public</td><td>Project background</td></tr>
+            <tr><td><strong>Submit</strong></td><td><code>/submit</code></td><td>protected</td><td>Upload datasets/scripts, declare algorithm parameters, create experiments (with Advanced cluster settings)</td></tr>
+            <tr><td><strong>Experiments</strong></td><td><code>/experiments</code></td><td>protected</td><td>Runs console &mdash; list, run/re-run, cancel, live output, visualize, multi-select aggregate download</td></tr>
+            <tr><td><strong>Profile</strong></td><td><code>/profile</code></td><td>protected</td><td>User info</td></tr>
+            <tr><td><strong>Sweep</strong></td><td><code>/sweeps</code> (disabled)</td><td>protected</td><td><span class="callout-inline">PLACEHOLDER &mdash; route is commented out; nav link disabled until the Fall&nbsp;2026 sweep engine ships</span></td></tr>
           </tbody>
         </table>
       </section>
 
       <section id="components">
-        <h2>Shared components</h2>
+        <h2>Key files</h2>
         <table>
           <thead>
-            <tr><th>Component</th><th>Used By</th><th>Responsibility</th></tr>
+            <tr><th>File</th><th>Responsibility</th></tr>
           </thead>
           <tbody>
-            <tr><td><strong>Header</strong></td><td>All protected pages</td><td>Navbar with PICARD branding, nav links, hamburger menu</td></tr>
-            <tr><td><strong>ExperimentCard</strong></td><td>Home, Profile</td><td>Experiment name, status badge (Queued / In Progress / Processing / Finished / Failed), action links</td></tr>
-            <tr><td><strong>FileUploader</strong></td><td>ExperimentCreation</td><td>Chunked file upload (1 MB chunks) for CSV datasets via <code>POST /api/dataset/upload</code></td></tr>
-            <tr><td><strong>AlgorithmModal</strong></td><td>ExperimentCreation</td><td>Bootstrap modal for algorithm JAR upload &mdash; extracts <code>picard.json</code> from ZIP for parameter definitions</td></tr>
-            <tr><td><strong>ClusterParameters</strong></td><td>ExperimentSetup</td><td>Loads cluster configuration defaults from <code>config.json</code>; renders form fields for node count, memory, cores</td></tr>
-            <tr><td><strong>CSVViewer</strong></td><td>DataVisualization</td><td>PapaParse CSV parsing, MUI Table rendering with pagination and sticky headers</td></tr>
-            <tr><td><strong>Parameter</strong></td><td>ExperimentSetup</td><td>Labeled text input for individual algorithm parameters</td></tr>
-            <tr><td><strong>HowToExperiment</strong></td><td>ExperimentCreation</td><td>Toast popup with step-by-step experiment creation instructions</td></tr>
-            <tr><td><strong>Jsonify</strong></td><td>ExperimentSetup</td><td>Utility that constructs the backend-ready JSON payload from form data</td></tr>
+            <tr><td><code>pages/Submit.jsx</code></td><td>Dataset/script uploads, the dynamic algorithm-parameter builder, experiment creation, Advanced (cluster) settings</td></tr>
+            <tr><td><code>pages/Experiments.jsx</code></td><td>Runs console: status polling, run/cancel/delete, the visualization panel, and the aggregate multi-select</td></tr>
+            <tr><td><code>components/layout/LcarsLayout.jsx</code></td><td>The shared LCARS shell, primary nav, sidebar stats, and the theme/sound toggles</td></tr>
+            <tr><td><code>components/common/StatusBadge.jsx</code></td><td>Status pill (Pending/Queued/Running/Success/Failed/Cancelled)</td></tr>
+            <tr><td><code>lib/api.js</code></td><td><code>apiRequest()</code> wrapper around fetch &mdash; CSRF, JSON/FormData, error messages</td></tr>
+            <tr><td><code>styles/dashboard-light.css</code></td><td>WVU Light theme overrides, scoped under <code>body.light-theme</code></td></tr>
           </tbody>
         </table>
       </section>
@@ -186,121 +163,62 @@
       <section id="auth">
         <h2>Authentication flow</h2>
         <p>
-          The authentication flow uses Google OAuth 2.0, mediated entirely
-          through the backend &mdash; the frontend never communicates
-          directly with Google.
+          Auth is <strong>GitHub OAuth</strong>, mediated by the Django backend.
+          The frontend never talks to GitHub directly, and there is no token in
+          <code>localStorage</code> &mdash; the session lives in a cookie.
         </p>
         <ol class="steps">
-          <li>
-            <strong>Login initiation.</strong>
-            <code>LoginPage</code> redirects the browser to the backend's
-            <code>/Authentication/login</code> endpoint.
-          </li>
-          <li>
-            <strong>OAuth redirect.</strong>
-            The backend redirects to Google OAuth 2.0, restricted to the
-            <code>@mix.wvu.edu</code> domain.
-          </li>
-          <li>
-            <strong>Callback.</strong>
-            Google redirects back to the frontend's
-            <code>/authenticationPage</code> route with user details as URL
-            parameters (<code>userID</code>, <code>userEmail</code>,
-            <code>firstName</code>, <code>lastName</code>).
-          </li>
-          <li>
-            <strong>Token persistence.</strong>
-            <code>AuthPage</code> calls <code>AuthProvider.setToken()</code>,
-            which stores user info in <code>localStorage</code> and sets the
-            Axios <code>Authorization</code> header globally.
-          </li>
-          <li>
-            <strong>Session validation.</strong>
-            On app mount, <code>AuthProvider</code> calls
-            <code>GET /Authentication/session</code> to validate the stored
-            token. Invalid tokens are cleared.
-          </li>
-          <li>
-            <strong>Logout.</strong>
-            <code>Header</code> triggers <code>GET /Authentication/logout</code>
-            on the backend, then clears the local token via
-            <code>AuthProvider</code>.
-          </li>
+          <li><strong>Sign in.</strong> The user clicks GitHub sign-in; <code>AuthProvider.login()</code> sends them to the backend's GitHub OAuth start endpoint.</li>
+          <li><strong>OAuth round-trip.</strong> GitHub authorizes and redirects back to the backend, which creates/looks up the Django user and establishes a session.</li>
+          <li><strong>Session cookie.</strong> Subsequent API calls include the session cookie (<code>credentials: 'include'</code>); <code>AuthProvider</code> reflects the authenticated user.</li>
+          <li><strong>Logout.</strong> <code>AuthProvider.logout()</code> clears the backend session and resets local state.</li>
         </ol>
       </section>
 
       <section id="workflow">
         <h2>Experiment workflow (user perspective)</h2>
         <ol class="steps">
-          <li>
-            <strong>ExperimentCreation</strong> &mdash;
-            User selects an algorithm
-            (<code>GET /api/algorithms/algorithms</code>) and a dataset
-            (<code>GET /api/dataset</code>). New ones can be uploaded via
-            modals. On "Proceed", the user is navigated to the configuration
-            page with the selected <code>algorithmId</code>.
-          </li>
-          <li>
-            <strong>ExperimentSetup</strong> &mdash;
-            Algorithm parameters are fetched via
-            <code>GET /api/algorithms/algorithmParameters</code>. The user
-            configures algorithm params, cluster params (node count,
-            driver/executor memory and cores), and assigns a dataset. Submit
-            sends a <code>POST /api/experiment/submit</code>. Batch submission
-            allows multiple experiments with parameter sweeps.
-          </li>
-          <li>
-            <strong>QueuePage</strong> &mdash;
-            Circular progress indicator with queue position. Position
-            decrements every 10 seconds. When the experiment starts executing,
-            the user is navigated to results.
-          </li>
-          <li>
-            <strong>ResultsPage</strong> &mdash;
-            Polls <code>GET /api/experiment/status/{id}</code> every 1 second
-            and holds open a WebSocket to <code>/experiment/watch/{id}</code>
-            for real-time log streaming, rendered in a terminal-style display
-            (green text on black). Once finished, a download button enables
-            retrieval of output files.
-          </li>
-          <li>
-            <strong>DataVisualization</strong> &mdash;
-            Displays experiment output as a paginated CSV table using
-            PapaParse for parsing and MUI Table for rendering.
-          </li>
+          <li><strong>Submit page.</strong> Upload a dataset (CSV) and an algorithm (Python/JAR). Optionally declare typed algorithm parameters (name, type, default, driver index) with the add/remove row builder.</li>
+          <li><strong>Create experiment.</strong> Pick a script + dataset, optional args, and optionally open <em>Advanced Settings</em> to set cluster resources (executors/nodes, cores, driver/executor memory). Creates a <code>Pending</code> experiment.</li>
+          <li><strong>Runs console.</strong> Queue/Run the experiment. The page polls the detail endpoint and renders live output and the status badge. A <em>Cancel Run</em> button appears while it's active.</li>
+          <li><strong>Results.</strong> When a result exists: download it, or use the <em>Data Visualization</em> panel to plot two result columns (line/bar/scatter).</li>
+          <li><strong>Aggregate.</strong> Tick multiple experiments in the list and <em>Download Selected</em> to get a zip of their results.</li>
         </ol>
       </section>
 
-      <section id="external">
-        <h2>External services</h2>
-        <table>
-          <thead>
-            <tr><th>Service</th><th>Role</th><th>Communication</th></tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><strong>Backend API (port 5080)</strong></td>
-              <td>.NET 8 REST API &mdash; data persistence, experiment execution, authentication</td>
-              <td>All requests proxied through Vite (<code>/api/*</code> &rarr; <code>localhost:5080</code>)</td>
-            </tr>
-            <tr>
-              <td><strong>Google OAuth 2.0</strong></td>
-              <td>Authentication provider</td>
-              <td>Indirect &mdash; login redirect handled entirely by the backend</td>
-            </tr>
-            <tr>
-              <td><strong>localStorage</strong></td>
-              <td>Browser-local persistence</td>
-              <td>Auth token (<code>userID</code>, <code>userEmail</code>, <code>firstName</code>, <code>lastName</code>) and theme preference</td>
-            </tr>
-          </tbody>
-        </table>
+      <section id="themes">
+        <h2>Theming</h2>
+        <p>
+          Two themes ship together. <strong>LCARS</strong> (Star Trek-inspired,
+          dark, dense) is the default. <strong>WVU Light</strong> is an opt-in
+          alternative for readability &mdash; white background, WVU blue
+          (<code>#002855</code>) headers, WVU gold (<code>#EAAA00</code>)
+          accents. The toggle lives in the LCARS sidebar; the choice persists
+          across sessions via <code>localStorage</code>. The light theme is pure
+          CSS scoped under <code>body.light-theme</code>, so it never alters the
+          LCARS default.
+        </p>
+      </section>
+
+      <section id="api">
+        <h2>Talking to the API</h2>
+        <p>
+          All network access is funneled through <code>WorkspaceProvider</code>,
+          which calls <code>apiRequest()</code> from <code>lib/api.js</code>.
+          The endpoints it uses map directly to the
+          <a href="application.html">application layer</a> routes &mdash; e.g.
+          <code>POST /experiments/create/</code>,
+          <code>POST /experiments/{id}/run/</code>,
+          <code>POST /experiments/{id}/cancel/</code>,
+          <code>GET /experiments/{id}/visualization/</code>, and
+          <code>POST /experiments/aggregate/</code>.
+        </p>
       </section>
     </main>
   </div>
 
   <footer class="site-footer">
-    PICARD Onboarding Portal &middot; v0.2 draft &middot; PICARD 2026.08 team
+    PICARD Onboarding Portal &middot; new generation (Django/React) &middot; PICARD 2026 team
   </footer>
 </body>
 </html>

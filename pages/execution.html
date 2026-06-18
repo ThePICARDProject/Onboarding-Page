@@ -23,12 +23,12 @@
     <aside class="subnav">
       <div class="label">On this page</div>
       <ul>
-        <li><a href="#diagram">Diagram</a></li>
-        <li><a href="#tiers">Three Tiers</a></li>
-        <li><a href="#nodes">Node Reference</a></li>
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#services">Compose Services</a></li>
+        <li><a href="#spark">The Spark Cluster</a></li>
         <li><a href="#flow">Execution Flow</a></li>
-        <li><a href="#connections">Connections</a></li>
-        <li><a href="#paths">HDFS Paths</a></li>
+        <li><a href="#shared">The Shared Directory</a></li>
+        <li><a href="#cluster-config">Cluster Config</a></li>
         <li><a href="#why">Why It Looks This Way</a></li>
       </ul>
       <div class="label">Other layers</div>
@@ -43,297 +43,174 @@
         <div class="label">Layer 3 of 3</div>
         <h1>Execution Layer</h1>
         <p>
-          The Docker Swarm cluster that runs the actual algorithms. Every
-          experiment gets a fresh Hadoop/Spark stack, runs to completion, and
-          is torn down. Nothing about the cluster is durable between
-          experiments.
+          The Spark cluster that runs the actual algorithms. In the new gen it
+          is a long-lived <strong>Spark master + worker</strong> defined in
+          Docker Compose &mdash; not a per-experiment Swarm stack.
         </p>
       </div>
 
-      <section id="diagram">
-        <h2>Diagram</h2>
-        <div class="diagram">
-          <img src="../assets/diagrams/execution-layer.png" alt="Execution layer architecture diagram">
-        </div>
-        <div class="diagram-caption">
-          Docker Swarm orchestrates a per-experiment HDFS + YARN + Spark stack
-          with ephemeral data movement containers.
-          Source: <code>docs/exlayer/execution-layer.png</code>.
-        </div>
+      <div class="callout tip">
+        <span class="label">New generation</span>
+        <p style="margin: 0.4rem 0 0;">
+          The old gen built a fresh Hadoop/YARN/HDFS stack on Docker Swarm for
+          <em>every</em> experiment and tore it down afterward. The new gen runs
+          a <strong>standalone Spark cluster</strong> (one master, one worker)
+          that stays up; Celery submits jobs to it with
+          <code>spark-submit --master spark://spark-master:7077</code>. There is
+          no YARN, no HDFS, and no per-experiment teardown.
+        </p>
+      </div>
+
+      <section id="overview">
+        <h2>Overview</h2>
+        <p>
+          Everything is orchestrated by <code>docker-compose.yml</code> at the
+          repo root. The relevant cast: a Django <code>backend</code>, a
+          <code>celery_worker</code>, a <code>redis</code> broker, a
+          <code>db</code> (MySQL), a <code>frontend</code>, and the two Spark
+          services. The worker and the Spark containers share a directory so
+          results can be handed back to Django.
+        </p>
       </section>
 
-      <section id="tiers">
-        <h2>Three tiers, top to bottom</h2>
-        <p>
-          The execution layer is conceptually arranged in three tiers. The
-          orchestrator sits on top, the cluster sits in the middle, and the
-          actual computation/storage sits at the bottom.
-        </p>
-
-        <h3>Tier 1 &mdash; Containerization &amp; Orchestration</h3>
+      <section id="services">
+        <h2>Compose services</h2>
         <table>
-          <thead><tr><th>Node</th><th>Role</th></tr></thead>
+          <thead>
+            <tr><th>Service</th><th>Image / Build</th><th>Role</th></tr>
+          </thead>
           <tbody>
-            <tr><td><strong>Docker Swarm</strong></td><td>Cluster Orchestrator</td></tr>
-          </tbody>
-        </table>
-
-        <h3>Tier 2 &mdash; Distributed cluster (inside Docker Swarm)</h3>
-        <table>
-          <thead><tr><th>Node</th><th>Role</th></tr></thead>
-          <tbody>
-            <tr><td><strong>Overlay Network</strong></td><td>Per-experiment attachable overlay (<code>{stack}_cluster-network</code>)</td></tr>
-            <tr><td><strong>Master Node</strong></td><td>HDFS NameNode + YARN ResourceManager</td></tr>
-            <tr><td><strong>Worker Nodes (1..N)</strong></td><td>HDFS DataNode + YARN NodeManager</td></tr>
-            <tr><td><strong>Dataset Injector</strong></td><td>Ephemeral container &mdash; injects dataset into HDFS</td></tr>
-            <tr><td><strong>Results Extractor</strong></td><td>Ephemeral container &mdash; extracts results from HDFS</td></tr>
-          </tbody>
-        </table>
-
-        <h3>Tier 3 &mdash; Computation &amp; storage</h3>
-        <table>
-          <thead><tr><th>Node</th><th>Role</th></tr></thead>
-          <tbody>
-            <tr><td><strong>Spark Driver</strong></td><td><code>spark-submit --master yarn</code> (runs on Master Node)</td></tr>
-            <tr><td><strong>Spark Executors</strong></td><td>YARN-allocated processes on Worker Nodes</td></tr>
-            <tr><td><strong>HDFS</strong></td><td><code>hdfs://master:8020</code> (replication factor 1)</td></tr>
+            <tr><td><code>db</code></td><td>mysql:8.0</td><td>Persistent store; exposed on host <code>${MYSQL_PORT:-3307}</code></td></tr>
+            <tr><td><code>backend</code></td><td><code>./backend</code></td><td>Django API on <code>:5000</code>; runs <code>migrate</code> then <code>runserver</code></td></tr>
+            <tr><td><code>celery_worker</code></td><td><code>./backend</code></td><td><code>celery -A backend_config worker --concurrency=1</code> &mdash; runs experiments</td></tr>
+            <tr><td><code>redis</code></td><td>redis:alpine</td><td>Celery broker</td></tr>
+            <tr><td><code>frontend</code></td><td><code>./frontend</code></td><td>Built React app served by nginx on host <code>:3000</code></td></tr>
+            <tr><td><code>spark-master</code></td><td><code>./spark-cluster</code></td><td>Spark master; UI on <code>:8080</code>, service on <code>:7077</code></td></tr>
+            <tr><td><code>spark-worker</code></td><td><code>./spark-cluster</code></td><td>Spark worker (1 core, 1G); UI on <code>:8081</code></td></tr>
           </tbody>
         </table>
       </section>
 
-      <section id="nodes">
-        <h2>Node reference</h2>
-
-        <h3>Docker Swarm</h3>
+      <section id="spark">
+        <h2>The Spark cluster</h2>
         <p>
-          Orchestrates the Hadoop/Spark cluster as a Docker stack. It
-          dynamically rewrites the <code>Dockerfile</code> to include
-          user-specific algorithm JARs, builds the
-          <code>spark-hadoop:latest</code> image, deploys master/worker
-          services, runs ephemeral data-movement containers, and tears down
-          the stack on completion. Stack naming convention:
-          <code>{workdir}_{experimentId[:12]}</code>.
+          The master and worker are built from <code>./spark-cluster</code> and
+          run Spark's standalone daemons directly:
         </p>
-
-        <h3>Overlay Network</h3>
+        <ul>
+          <li><strong>spark-master</strong> &mdash; <code>org.apache.spark.deploy.master.Master</code>. The cluster address is <code>spark://spark-master:7077</code>; the web UI is at <code>:8080</code>.</li>
+          <li><strong>spark-worker</strong> &mdash; <code>org.apache.spark.deploy.worker.Worker spark://spark-master:7077</code>, configured with <code>SPARK_WORKER_CORES=1</code> and <code>SPARK_WORKER_MEMORY=1G</code>. Web UI at <code>:8081</code>.</li>
+        </ul>
         <p>
-          An attachable overlay network created per experiment stack. It
-          provides Docker DNS-based service discovery &mdash; the master node
-          is reachable as the literal hostname <code>master</code>. All
-          cluster containers communicate over this network.
-        </p>
-
-        <h3>Master Node</h3>
-        <p>
-          A single container (0.5 CPU, 2048 MB) running the HDFS NameNode and
-          YARN ResourceManager. On first start it formats HDFS via
-          <code>hdfs namenode -format</code>. NameNode data is persisted to
-          a <code>namenode-vol</code> Docker volume. Hostname:
-          <code>master</code> via Docker DNS.
-        </p>
-
-        <h3>Worker Nodes</h3>
-        <p>
-          Scaled containers (1..N per experiment, 0.5 CPU, 2048 MB each)
-          running HDFS DataNode and YARN NodeManager. The count is set by
-          <code>ClusterParameters.NodeCount</code> from the application layer.
-          Each worker gets a unique Docker volume:
-          <code>datanode-vol-SERV{service}-NODE{node}-TASK{slot}</code>.
-        </p>
-
-        <h3>Dataset Injector</h3>
-        <p>
-          An ephemeral one-shot container
-          (<code>{stack}_dataset-injector</code>) that volume-mounts the
-          local dataset file and copies it into HDFS via
-          <code>hdfs dfs -put</code>. It connects to the cluster overlay
-          network to reach the NameNode. Runs <em>before</em>
-          <code>spark-submit</code>.
-        </p>
-
-        <h3>Results Extractor</h3>
-        <p>
-          An ephemeral one-shot container
-          (<code>{stack}_results-extractor</code>) that merges distributed
-          output files from HDFS back to the host filesystem via
-          <code>hdfs dfs -getmerge</code>. It connects to the cluster overlay
-          network. Runs <em>after</em> <code>spark-submit</code> completes.
-        </p>
-
-        <h3>Spark Driver</h3>
-        <p>
-          Launched via <code>spark-submit --master yarn</code> on the master
-          container. Configured with driver memory/cores, executor count,
-          executor cores/memory, and memory overhead from
-          <code>ClusterParameters</code>. Receives the dataset name, HDFS URL,
-          output path, and algorithm-specific parameters as positional
-          arguments.
-        </p>
-
-        <h3>Spark Executors</h3>
-        <p>
-          YARN-allocated processes on worker nodes that execute the
-          distributed ML algorithm. The Scala JARs are built for Spark 3.5.3
-          / Scala 2.12 (CoDRIFt, MLRF, SupervisedMLRF, etc.) and live at
-          <code>/opt/jars/</code> inside the container image.
-        </p>
-
-        <h3>HDFS</h3>
-        <p>
-          Hadoop Distributed File System with replication factor 1. Composed
-          of the NameNode (master) and DataNodes (workers). Datasets are
-          injected to <code>/user/hadoop/</code> and results are written to
-          <code>/data/{userId}/{experimentId}/</code>. Both paths are cleaned
-          up post-experiment via <code>hdfs dfs -rm</code>.
+          Both mount the Django media directory read-only (so they can read
+          uploaded datasets/scripts) and the shared apps directory read-write.
+          Scaling out is just adding more <code>spark-worker</code> replicas.
         </p>
       </section>
 
       <section id="flow">
         <h2>Execution flow</h2>
         <p>
-          Once <code>submit-experiment.sh</code> is invoked by the application
-          layer, the execution layer goes through this sequence:
+          The execution layer doesn't orchestrate anything itself &mdash; it
+          waits for the Celery worker to submit jobs. From the
+          <a href="application.html">application layer</a>'s
+          <code>run_db_script</code> task:
         </p>
         <ol class="steps">
           <li>
-            <strong>Build the image.</strong>
-            <code>docker build</code> against the freshly rewritten
-            <code>spark-hadoop/Dockerfile</code>. The user's algorithm JARs
-            are baked in at <code>/opt/jars/</code>.
+            <strong>The worker builds a <code>spark-submit</code> command.</strong>
+            <code>spark-submit --master spark://spark-master:7077 [cluster flags]
+            &lt;script&gt; [--class &lt;main&gt;] &lt;dataset&gt; &lt;result-file&gt;</code>.
+            Cluster flags come from the experiment's <code>cluster_config</code>.
           </li>
           <li>
-            <strong>Create the per-experiment overlay network.</strong>
-            Docker Swarm creates <code>{stack}_cluster-network</code> as an
-            attachable overlay so the master, workers, and ephemeral
-            containers can all see each other.
+            <strong>It launches the command as a subprocess.</strong>
+            <code>subprocess.Popen</code> runs spark-submit; the worker captures
+            combined stdout/stderr and streams it into the experiment's output
+            file (this is the live log the UI polls). The PID is recorded so the
+            job can be killed.
           </li>
           <li>
-            <strong>Deploy the stack.</strong>
-            <code>docker stack deploy</code> launches the master container
-            (NameNode + ResourceManager) and scales the worker service to
-            <code>NodeCount</code> containers (DataNode + NodeManager each).
+            <strong>Spark runs the job.</strong> The master schedules the work
+            on the worker; the algorithm reads the mounted dataset and writes
+            its result to a unique file in the shared directory
+            (<code>SPARK_SHARED_DIR</code>, i.e. <code>/opt/spark/apps</code>).
           </li>
           <li>
-            <strong>Format HDFS on first start.</strong>
-            The master runs <code>hdfs namenode -format</code> and persists
-            NameNode state to <code>namenode-vol</code>.
-          </li>
-          <li>
-            <strong>Inject the dataset.</strong>
-            The Dataset Injector container mounts the local CSV at
-            <code>/mnt/data/{dataset}</code> and runs
-            <code>hdfs dfs -put /mnt/data/{dataset} /user/hadoop/</code>,
-            then exits.
-          </li>
-          <li>
-            <strong>Run <code>spark-submit</code>.</strong>
-            On the master container, Spark is launched in YARN mode. The
-            driver runs on the master; YARN allocates executors on the
-            worker nodes; Spark distributes the computation. Output is
-            written to <code>/data/{userId}/{experimentId}/</code> in HDFS.
-          </li>
-          <li>
-            <strong>Extract results.</strong>
-            The Results Extractor container runs
-            <code>hdfs dfs -getmerge {output} /mnt/results/{merged}</code>
-            to merge distributed output files back to a single file on the
-            host filesystem, then exits.
-          </li>
-          <li>
-            <strong>Tear down.</strong>
-            <code>cleanup.sh</code> removes the stack, the overlay network,
-            and HDFS artifacts. This runs unconditionally with a 30-second
-            timeout.
+            <strong>The worker ingests the result.</strong> When spark-submit
+            exits, the Celery task copies the result file into Django storage,
+            deletes the shared copy, and finalizes the experiment status.
           </li>
         </ol>
       </section>
 
-      <section id="connections">
-        <h2>Connections</h2>
+      <section id="shared">
+        <h2>The shared directory</h2>
+        <p>
+          The bridge between Spark and Django is a bind-mounted directory, not
+          HDFS. In <code>docker-compose.yml</code> the host's
+          <code>./spark-apps</code> is mounted at <code>/opt/spark/apps</code>
+          in the <code>backend</code>, <code>celery_worker</code>,
+          <code>spark-master</code>, and <code>spark-worker</code> containers,
+          and <code>SPARK_SHARED_DIR=/opt/spark/apps</code> is set on the worker.
+        </p>
         <table>
-          <thead>
-            <tr><th>From</th><th>To</th><th>Label</th></tr>
-          </thead>
+          <thead><tr><th>Path</th><th>Purpose</th></tr></thead>
           <tbody>
-            <tr><td>Docker Swarm</td><td>Overlay Network</td><td>Create per-experiment stack network</td></tr>
-            <tr><td>Docker Swarm</td><td>Master Node</td><td><code>docker stack deploy</code></td></tr>
-            <tr><td>Docker Swarm</td><td>Worker Nodes</td><td><code>docker service scale</code> to N</td></tr>
-            <tr><td>Docker Swarm</td><td>Dataset Injector</td><td><code>docker run</code> (one-time, pre-execution)</td></tr>
-            <tr><td>Docker Swarm</td><td>Results Extractor</td><td><code>docker run</code> (one-time, post-execution)</td></tr>
-            <tr><td>Master Node</td><td>Worker Nodes</td><td>HDFS replication + YARN task scheduling</td></tr>
-            <tr><td>Master Node</td><td>Spark Driver</td><td><code>spark-submit</code> launched on master container</td></tr>
-            <tr><td>Dataset Injector</td><td>HDFS</td><td><code>hdfs dfs -put /mnt/data/{dataset} /user/hadoop</code></td></tr>
-            <tr><td>HDFS</td><td>Spark Driver</td><td>Read dataset from <code>/user/hadoop/</code></td></tr>
-            <tr><td>Spark Driver</td><td>Spark Executors</td><td>Distribute ML computation</td></tr>
-            <tr><td>Worker Nodes</td><td>Spark Executors</td><td>YARN NodeManager launches executors</td></tr>
-            <tr><td>Spark Executors</td><td>HDFS</td><td>Write results to <code>/data/{userId}/{experimentId}/</code></td></tr>
-            <tr><td>HDFS</td><td>Results Extractor</td><td><code>hdfs dfs -getmerge {output} /mnt/results/{merged}</code></td></tr>
+            <tr><td><code>/opt/spark/apps</code> (<code>SPARK_SHARED_DIR</code>)</td><td>Where Spark writes result files and the worker reads them back</td></tr>
+            <tr><td><code>/app/media</code></td><td>Django media (datasets/scripts), mounted read-only into the Spark containers</td></tr>
+            <tr><td><code>spark://spark-master:7077</code></td><td>The cluster master address used by <code>spark-submit</code></td></tr>
           </tbody>
         </table>
       </section>
 
-      <section id="paths">
-        <h2>HDFS &amp; container paths</h2>
+      <section id="cluster-config">
+        <h2>Per-experiment cluster config</h2>
+        <p>
+          Users can override Spark resources per experiment via the Submit
+          page's Advanced Settings. Those values are stored on
+          <code>SparkExperiment.cluster_config</code> and translated to
+          spark-submit flags by <code>_build_cluster_args</code> in
+          <code>experiments/tasks.py</code>:
+        </p>
         <table>
-          <thead>
-            <tr><th>Path</th><th>Purpose</th></tr>
-          </thead>
+          <thead><tr><th>cluster_config key</th><th>spark-submit flag</th></tr></thead>
           <tbody>
-            <tr><td><code>hdfs://master:8020</code></td><td>HDFS base URL (master node hostname via Docker DNS)</td></tr>
-            <tr><td><code>/user/hadoop/{dataset}</code></td><td>Where the Dataset Injector places the input CSV</td></tr>
-            <tr><td><code>/data/{userId}/{experimentId}/</code></td><td>Where Spark writes distributed output in HDFS</td></tr>
-            <tr><td><code>/opt/jars/</code></td><td>Algorithm JARs inside the container image</td></tr>
-            <tr><td><code>/mnt/data/{dataset}</code></td><td>Bind mount on the Dataset Injector container</td></tr>
-            <tr><td><code>/mnt/results/</code></td><td>Bind mount on the Results Extractor container (writes merged output back to host)</td></tr>
-            <tr><td><code>namenode-vol</code></td><td>Docker volume holding NameNode metadata</td></tr>
-            <tr><td><code>datanode-vol-SERV{s}-NODE{n}-TASK{t}</code></td><td>Per-worker Docker volume for DataNode storage</td></tr>
+            <tr><td><code>driver_memory</code></td><td><code>--driver-memory</code></td></tr>
+            <tr><td><code>executor_memory</code></td><td><code>--executor-memory</code></td></tr>
+            <tr><td><code>cores</code></td><td><code>--executor-cores</code></td></tr>
+            <tr><td><code>nodes</code></td><td><code>--num-executors</code></td></tr>
           </tbody>
         </table>
+        <p>An empty <code>cluster_config</code> means "use the cluster defaults" &mdash; no flags are added.</p>
       </section>
 
       <section id="why">
         <h2>Why it looks this way</h2>
-        <p>
-          A few choices in this layer aren't obvious until you've stared at
-          it for a while. Here's what to keep in mind:
-        </p>
         <ul>
           <li>
-            <strong>The cluster is rebuilt for every experiment.</strong>
-            That sounds wasteful, but it gives strong isolation: a broken
-            algorithm cannot poison the next run because the entire stack
-            (network, volumes, containers) is fresh. The price is the ~3
-            minute startup cost per experiment.
+            <strong>The cluster is long-lived, not per-experiment.</strong>
+            Standalone Spark stays up and accepts submissions, so there's no
+            ~3-minute stack build per run like the old Swarm approach. The
+            trade-off is weaker isolation between experiments.
           </li>
           <li>
-            <strong>Algorithm JARs are baked into the image.</strong>
-            Rather than mounting JARs at runtime, the application layer
-            rewrites the <code>Dockerfile</code> to <code>COPY</code> the
-            user's JARs in before <code>docker build</code>. This is what
-            forces sequential execution &mdash; only one experiment can own
-            the shared <code>Dockerfile</code> at a time.
+            <strong>Results travel over a shared directory, not HDFS.</strong>
+            For a single-host Compose deployment, a bind-mounted folder is the
+            simplest reliable hand-off. The Spark script must write to the
+            result path it's given as its final argument.
           </li>
           <li>
-            <strong>HDFS uses replication factor 1.</strong>
-            For a single-machine swarm with worker containers running on the
-            same host, replication adds nothing but disk usage. If PICARD
-            ever moves to a true multi-node cluster, this should be revisited.
+            <strong>Concurrency is 1 by default.</strong> The Celery worker runs
+            with <code>--concurrency=1</code>, so experiments execute one at a
+            time. Raising concurrency (and worker replicas) is the path to
+            parallel execution.
           </li>
           <li>
-            <strong>Data movement is done by separate one-shot containers.</strong>
-            The Dataset Injector and Results Extractor are deliberately
-            separate from the long-lived master/worker containers. They mount
-            host paths (<code>/mnt/data</code>, <code>/mnt/results</code>),
-            which the cluster containers do <em>not</em>. This is the only
-            bridge between host disk and HDFS.
-          </li>
-          <li>
-            <strong>Cleanup must run no matter what.</strong>
-            Spark crashes, and when it does it can leave orphaned namenodes
-            and dangling volumes. <code>cleanup.sh</code> is designed to run
-            unconditionally with a 30-second timeout, and
-            <code>docker system prune</code> is the manual escape hatch when
-            things really get wedged.
+            <strong>Cancellation kills the OS process.</strong> Because the
+            worker blocks on the spark-submit subprocess, the cancel endpoint
+            SIGKILLs the recorded PID &mdash; see the
+            <a href="application.html#cancel">application layer</a>.
           </li>
         </ul>
       </section>
@@ -341,7 +218,7 @@
   </div>
 
   <footer class="site-footer">
-    PICARD Onboarding Portal &middot; v0.2 draft &middot; PICARD 2026.08 team
+    PICARD Onboarding Portal &middot; new generation (Django/React) &middot; PICARD 2026 team
   </footer>
 </body>
 </html>

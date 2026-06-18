@@ -34,15 +34,29 @@
       </div>
     </div>
 
+    <div class="callout tip">
+      <span class="label">Heads up &middot; new generation</span>
+      <p style="margin: 0.4rem 0 0;">
+        PICARD has been rewritten. The platform is now a
+        <strong>Django REST + React</strong> application with a
+        <strong>Celery/Redis</strong> task queue and GitHub OAuth, replacing the
+        previous .NET&nbsp;8 / Docker Swarm stack. These docs describe that new
+        generation (repo: <code>ThePICARDProject/picard_new_generation</code>).
+        If you worked from the old <code>API-backend</code> / <code>481-FrontEnd</code>
+        repos, read the <a href="pages/architecture.html">architecture overview</a>
+        first &mdash; several things have changed.
+      </p>
+    </div>
+
     <section>
       <h2>What is PICARD?</h2>
       <p>
         PICARD provides a web-based interface to a Spark/Hadoop cluster running
         on dedicated hardware in a WVU building. Researchers upload their
-        algorithms (as Scala JARs) and datasets (as CSVs), configure cluster
-        resources, and submit experiments through a browser. The platform
-        handles authentication, queueing, distributed execution, and result
-        delivery.
+        algorithms (Python scripts or Spark JARs) and datasets (as CSVs),
+        configure cluster resources, and submit experiments through a browser.
+        The platform handles authentication, queueing, distributed execution,
+        and result delivery.
       </p>
       <p>
         The project was originally inspired by Dr. Devine's master's thesis on
@@ -64,25 +78,29 @@
         <a href="pages/presentation.html" class="card linkable layer-pres">
           <h3>Presentation Layer</h3>
           <p>
-            React + Vite single-page app on port 5173. Handles login, file
-            uploads, experiment configuration, and real-time result streaming.
-            This is what users see and click.
+            React + Vite single-page app. Handles GitHub login, file uploads,
+            experiment configuration, live result polling, visualization, and
+            result downloads. Ships with two themes &mdash; the Star Trek
+            <strong>LCARS</strong> default and an opt-in <strong>WVU Light</strong>
+            mode. This is what users see and click.
           </p>
         </a>
         <a href="pages/application.html" class="card linkable layer-app">
           <h3>Application Layer</h3>
           <p>
-            .NET 8 REST API on port 5080. Owns authentication, persistence
-            (MySQL/MariaDB), the experiment queue, and orchestration of the
-            cluster via shell scripts. The brain of the system.
+            Django + Django REST Framework API. Owns GitHub OAuth, persistence
+            (MySQL), and the experiment queue via <strong>Celery + Redis</strong>.
+            Celery workers shell out to <code>spark-submit</code> to run jobs.
+            The brain of the system.
           </p>
         </a>
         <a href="pages/execution.html" class="card linkable layer-exec">
           <h3>Execution Layer</h3>
           <p>
-            Docker Swarm running per-experiment Hadoop/Spark stacks. HDFS for
-            storage, YARN for scheduling, Spark for the actual computation.
-            Where algorithms actually run.
+            A Spark cluster (master + worker) defined in Docker Compose. Celery
+            tasks invoke <code>spark-submit</code> against the master; results
+            are written to a shared directory and ingested back into Django
+            storage. Where algorithms actually run.
           </p>
         </a>
       </div>
@@ -96,26 +114,27 @@
       <h2>How a request flows through the system</h2>
       <p>
         At a high level, every experiment follows the same path. The frontend
-        collects configuration and hands it to the backend, the backend
-        persists it and queues it, a background worker dequeues it and
-        launches a fresh Spark cluster on the swarm, results are written back
-        to disk, and the frontend streams the logs and final output to the
-        user's browser.
+        collects configuration and hands it to the Django API, the API persists
+        it and queues a Celery task, a worker dequeues it and runs
+        <code>spark-submit</code> against the Spark cluster, the result file is
+        written to the shared directory and ingested back into Django storage,
+        and the frontend polls for status and streams output to the user's
+        browser.
       </p>
       <div class="pipeline">
         <span class="stage">Browser</span>
         <span class="arrow">&rarr;</span>
-        <span class="stage">React (Vite, 5173)</span>
+        <span class="stage">React (Vite)</span>
         <span class="arrow">&rarr;</span>
-        <span class="stage">.NET API (5080)</span>
+        <span class="stage">Django REST API</span>
         <span class="arrow">&rarr;</span>
-        <span class="stage">MySQL + Channel queue</span>
+        <span class="stage">MySQL + Celery/Redis</span>
         <span class="arrow">&rarr;</span>
-        <span class="stage">DockerSwarm service</span>
+        <span class="stage">Celery worker</span>
         <span class="arrow">&rarr;</span>
-        <span class="stage">submit-experiment.sh</span>
+        <span class="stage">spark-submit</span>
         <span class="arrow">&rarr;</span>
-        <span class="stage">Spark on Hadoop/HDFS</span>
+        <span class="stage">Spark master + worker</span>
         <span class="arrow">&rarr;</span>
         <span class="stage">Result file</span>
       </div>
@@ -127,23 +146,25 @@
         <a href="pages/setup.html" class="card linkable">
           <h3>I want to run it locally</h3>
           <p>
-            Step-by-step instructions for SSH gateway access, port tunneling,
-            and starting the frontend + backend.
+            Step-by-step instructions for environment setup, the Docker Compose
+            stack, and starting the Django API, Celery worker, and React frontend.
           </p>
         </a>
         <a href="pages/architecture.html" class="card linkable">
           <h3>I want to understand the system</h3>
           <p>
-            Architecture overview connecting all three layers, with diagrams
-            and request lifecycles.
+            Architecture overview connecting all three layers, with the full
+            experiment lifecycle and layer boundaries.
           </p>
         </a>
         <a href="https://github.com/ThePICARDProject" class="card linkable">
           <h3>I want to read the code</h3>
           <p>
-            Frontend (<code>481-FrontEnd</code>) and backend
-            (<code>API-backend</code>) live under the
-            <code>ThePICARDProject</code> GitHub org.
+            The new generation lives in
+            <code>picard_new_generation</code> (Django + React) under the
+            <code>ThePICARDProject</code> GitHub org. The old
+            <code>API-backend</code> / <code>481-FrontEnd</code> repos are
+            reference only.
           </p>
         </a>
       </div>
@@ -151,7 +172,7 @@
   </div>
 
   <footer class="site-footer">
-    PICARD Onboarding Portal &middot; v0.2 draft &middot; PICARD 2026.08 team
+    PICARD Onboarding Portal &middot; new generation (Django/React) &middot; PICARD 2026 team
   </footer>
 </body>
 </html>

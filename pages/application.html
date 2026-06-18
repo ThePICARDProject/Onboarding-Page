@@ -23,16 +23,15 @@
     <aside class="subnav">
       <div class="label">On this page</div>
       <ul>
-        <li><a href="#diagram">Diagram</a></li>
         <li><a href="#stack">Tech Stack</a></li>
-        <li><a href="#three-layer">Three Sub-layers</a></li>
-        <li><a href="#orchestration">Orchestration</a></li>
-        <li><a href="#lifecycle">Experiment Lifecycle</a></li>
-        <li><a href="#queue">Channel Queue</a></li>
-        <li><a href="#worker">Worker Service</a></li>
-        <li><a href="#schema">Database Schema</a></li>
-        <li><a href="#paths">File System Paths</a></li>
-        <li><a href="#errors">Error Handling</a></li>
+        <li><a href="#apps">Django Apps</a></li>
+        <li><a href="#endpoints">REST Endpoints</a></li>
+        <li><a href="#queue">Celery Queue</a></li>
+        <li><a href="#task">The Worker Task</a></li>
+        <li><a href="#lifecycle">Status Lifecycle</a></li>
+        <li><a href="#cancel">Cancellation</a></li>
+        <li><a href="#schema">Data Models</a></li>
+        <li><a href="#sweeps">Sweep Placeholder</a></li>
       </ul>
       <div class="label">Other layers</div>
       <ul>
@@ -46,22 +45,23 @@
         <div class="label">Layer 2 of 3</div>
         <h1>Application Layer</h1>
         <p>
-          The .NET 8 backend that owns persistence, the experiment queue, and
-          orchestration of the cluster. Everything that requires durability,
-          authorization, or scheduling lives here.
+          The Django backend that owns persistence, authentication, and the
+          experiment queue. Everything that requires durability, authorization,
+          or scheduling lives here.
         </p>
       </div>
 
-      <section id="diagram">
-        <h2>Diagram</h2>
-        <div class="diagram">
-          <img src="../assets/diagrams/application-layer.png" alt="Application layer architecture diagram">
-        </div>
-        <div class="diagram-caption">
-          Controllers, services, the async experiment pipeline, and persistence.
-          Source: <code>docs/applayer/application-layer.png</code>.
-        </div>
-      </section>
+      <div class="callout tip">
+        <span class="label">New generation</span>
+        <p style="margin: 0.4rem 0 0;">
+          This describes the Django backend in
+          <code>picard_new_generation/PICARD2/backend</code>. It replaces the
+          old .NET&nbsp;8 API. There is no <code>System.Threading.Channels</code>
+          queue, no EF Core, and no Docker Swarm orchestration &mdash; the queue
+          is <strong>Celery + Redis</strong> and the worker calls
+          <code>spark-submit</code> directly.
+        </p>
+      </div>
 
       <section id="stack">
         <h2>Technology stack</h2>
@@ -70,390 +70,197 @@
             <tr><th>Technology</th><th>Role</th></tr>
           </thead>
           <tbody>
-            <tr><td><strong>.NET 8.0 (C#)</strong></td><td>Application runtime and web framework (Kestrel HTTP server)</td></tr>
-            <tr><td><strong>Entity Framework Core</strong></td><td>ORM &mdash; maps C# entities to relational tables, manages migrations</td></tr>
-            <tr><td><strong>MySQL / MariaDB</strong></td><td>Persistent data store for users, experiments, datasets, results, algorithms</td></tr>
-            <tr><td><strong>Serilog</strong></td><td>Structured logging (console, debug, and MariaDB sinks)</td></tr>
-            <tr><td><strong>Google OAuth 2.0</strong></td><td>Authentication &mdash; restricted to <code>@mix.wvu.edu</code> domain; cookie-based sessions</td></tr>
-            <tr><td><strong>Swagger / OpenAPI</strong></td><td>Auto-generated API documentation from XML comments</td></tr>
+            <tr><td><strong>Django</strong></td><td>Web framework &mdash; routing, ORM, sessions, admin</td></tr>
+            <tr><td><strong>Django REST Framework</strong></td><td>API decorators (<code>@api_view</code>), permissions, responses</td></tr>
+            <tr><td><strong>MySQL</strong></td><td>Persistent store for users, experiments, datasets, scripts, sweeps</td></tr>
+            <tr><td><strong>Celery</strong></td><td>Async task queue &mdash; runs experiments off the request path</td></tr>
+            <tr><td><strong>Redis</strong></td><td>Celery message broker (<code>CELERY_BROKER_URL</code>)</td></tr>
+            <tr><td><strong>GitHub OAuth</strong></td><td>Authentication (the <code>authentication</code> app)</td></tr>
+            <tr><td><strong>matplotlib</strong></td><td>Optional &mdash; renders result plots for the visualization endpoint</td></tr>
           </tbody>
         </table>
         <p>
-          The backend runs on port <strong>5080</strong> and exposes a REST
-          API consumed by the React frontend (proxied through Vite on port
-          5173). All service registrations and DI wiring live in
-          <code>Program.cs</code>.
+          Settings live in <code>backend_config/settings.py</code>; the Celery
+          app is wired in <code>backend_config/celery.py</code>. Endpoints are
+          function-based DRF views, not class-based <code>APIView</code>s &mdash;
+          follow that convention when adding new ones.
         </p>
       </section>
 
-      <section id="three-layer">
-        <h2>Three sub-layers</h2>
-        <p>
-          Internally the backend follows a classic three-layer split:
-          <strong>Controllers</strong> handle HTTP, <strong>Services</strong>
-          contain business logic, and <strong>Data</strong> manages persistence
-          through EF Core.
-        </p>
-
-        <h3>Controllers (REST API surface)</h3>
+      <section id="apps">
+        <h2>Django apps</h2>
         <table>
           <thead>
-            <tr><th>Controller</th><th>Key Endpoints</th><th>Responsibility</th></tr>
+            <tr><th>App</th><th>Responsibility</th></tr>
           </thead>
           <tbody>
-            <tr><td><strong>ExperimentController</strong></td><td><code>POST /submit</code>, <code>GET /status/{id}</code>, <code>GET /kill/{id}</code>, <code>WS /watch/{id}</code></td><td>Experiment submission, status polling, kill requests, real-time log streaming via WebSocket</td></tr>
-            <tr><td><strong>DatasetController</strong></td><td><code>POST /upload</code>, <code>GET /</code>, <code>GET /download/{id}</code></td><td>CSV dataset upload (single and chunked), listing, download</td></tr>
-            <tr><td><strong>AlgorithmController</strong></td><td><code>POST /upload</code>, <code>GET /algorithms</code>, <code>GET /algorithmParameters</code></td><td>Algorithm JAR upload, listing, parameter definitions</td></tr>
-            <tr><td><strong>ResultController</strong></td><td><code>GET /{experimentId}</code>, <code>POST /aggregateData</code>, <code>POST /createCsv</code></td><td>Single result retrieval, multi-experiment aggregation, CSV export</td></tr>
-            <tr><td><strong>AuthenticationController</strong></td><td><code>GET /login</code>, <code>GET /logout</code>, <code>GET /session</code></td><td>Google OAuth login/logout, session validation</td></tr>
-            <tr><td><strong>UserController</strong></td><td>User CRUD</td><td>User management</td></tr>
-            <tr><td><strong>VisualizationController</strong></td><td>Visualization CRUD</td><td>Data visualization configuration</td></tr>
-          </tbody>
-        </table>
-
-        <h3>Services (business logic)</h3>
-        <table>
-          <thead>
-            <tr><th>Service</th><th>Lifetime</th><th>Responsibility</th></tr>
-          </thead>
-          <tbody>
-            <tr><td><strong>ExperimentService</strong></td><td>Scoped</td><td>Core orchestrator &mdash; submit, run, status-track, and kill experiments</td></tr>
-            <tr><td><strong>DatasetService</strong></td><td>Scoped</td><td>Chunked file upload assembly (save chunks, combine into final file)</td></tr>
-            <tr><td><strong>FileProcessor</strong></td><td>Scoped</td><td>Result aggregation across experiments, CSV generation, ZIP export</td></tr>
-            <tr><td><strong>DataVisualization</strong></td><td>Scoped</td><td>Visualization generation from result data</td></tr>
-            <tr><td><strong>DockerSwarm</strong></td><td>Singleton</td><td>Cluster interface &mdash; updates Dockerfiles, spawns shell scripts as subprocesses</td></tr>
-            <tr><td><strong>ExperimentQueue</strong></td><td>Singleton</td><td>In-memory <code>Channel&lt;ExperimentRequest&gt;</code> connecting submission to execution</td></tr>
-            <tr><td><strong>ExperimentWorkerService</strong></td><td>Hosted (Background)</td><td>Long-running consumer that dequeues and processes experiments sequentially</td></tr>
-          </tbody>
-        </table>
-
-        <h3>Data (persistence)</h3>
-        <table>
-          <thead>
-            <tr><th>Component</th><th>Description</th></tr>
-          </thead>
-          <tbody>
-            <tr><td><strong>ApplicationDbContext</strong></td><td>EF Core <code>DbContext</code> &mdash; 13 <code>DbSet&lt;&gt;</code> properties mapping to MySQL tables</td></tr>
-            <tr><td><strong>Migrations/</strong></td><td>EF Core code-first migration history</td></tr>
-            <tr><td><strong>Serilog MariaDB sink</strong></td><td>Writes structured log entries to a <code>Logs</code> table</td></tr>
+            <tr><td><code>experiments</code></td><td>The core: <code>SparkExperiment</code> model, REST views, the Celery task, visualization, and aggregation</td></tr>
+            <tr><td><code>datasets</code></td><td><code>CSVDataset</code> model + upload/list/delete views</td></tr>
+            <tr><td><code>scripts</code></td><td><code>Script</code> model (Python/JAR) with typed <code>parameters</code> + upload/list/delete views</td></tr>
+            <tr><td><code>authentication</code></td><td>GitHub OAuth login/logout/session</td></tr>
+            <tr><td><code>sweeps</code></td><td><span class="callout-inline">PLACEHOLDER &mdash; Parameter Sweep Engine schema &amp; stub routes (Fall&nbsp;2026)</span></td></tr>
           </tbody>
         </table>
       </section>
 
-      <section id="orchestration">
-        <h2>Orchestration: how data moves to the cluster</h2>
+      <section id="endpoints">
+        <h2>REST endpoints</h2>
+        <p>Each app's <code>urls.py</code> is included from <code>backend_config/urls.py</code> under its app prefix.</p>
+        <table>
+          <thead>
+            <tr><th>Method &amp; Path</th><th>View</th><th>Purpose</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>GET /experiments/</code></td><td><code>list_experiments</code></td><td>List the caller's experiments</td></tr>
+            <tr><td><code>POST /experiments/create/</code></td><td><code>create_experiment</code></td><td>Create a Pending experiment (accepts <code>cluster_config</code>)</td></tr>
+            <tr><td><code>GET /experiments/{id}/</code></td><td><code>get_experiment_detail</code></td><td>Status + output (polled by the UI)</td></tr>
+            <tr><td><code>POST /experiments/{id}/run/</code></td><td><code>run_experiment</code></td><td>Queue/re-queue &mdash; dispatches the Celery task</td></tr>
+            <tr><td><code>POST /experiments/{id}/cancel/</code></td><td><code>cancel_experiment</code></td><td>Revoke task + kill the spark-submit PID</td></tr>
+            <tr><td><code>GET /experiments/{id}/result/</code></td><td><code>download_experiment_result</code></td><td>Download a single result file</td></tr>
+            <tr><td><code>GET /experiments/{id}/result/columns/</code></td><td><code>experiment_result_columns</code></td><td>Column names for the viz dropdowns</td></tr>
+            <tr><td><code>GET /experiments/{id}/visualization/</code></td><td><code>experiment_visualization</code></td><td>Render a PNG plot (x, y, graph params)</td></tr>
+            <tr><td><code>POST /experiments/aggregate/</code></td><td><code>aggregate_experiment_results</code></td><td>Zip several experiments' results</td></tr>
+            <tr><td><code>DELETE /experiments/{id}/delete/</code></td><td><code>delete_experiment</code></td><td>Delete experiment + result artifact</td></tr>
+            <tr><td><code>POST /scripts/upload/</code></td><td><code>upload_script</code></td><td>Upload a script with optional typed parameters</td></tr>
+            <tr><td><code>POST /datasets/upload/csv/</code></td><td>datasets app</td><td>Upload a CSV dataset</td></tr>
+            <tr><td><code>* /sweeps/...</code></td><td>sweeps app</td><td><span class="callout-inline">All return 501 &mdash; PLACEHOLDER</span></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="queue">
+        <h2>Celery queue</h2>
         <p>
-          When the backend needs to execute an experiment on the Docker Swarm
-          cluster, it does so entirely through <strong>shell script
-          subprocesses</strong> managed by the <code>DockerSwarm</code>
-          singleton service. The flow is:
+          The queue is the decoupling point between the synchronous HTTP path
+          and asynchronous execution. When a user runs an experiment, the view
+          calls <code>run_db_script.delay(experiment.id)</code> and returns
+          immediately; a Celery worker picks the task up from Redis.
         </p>
-        <ol class="steps">
-          <li>
-            <strong>Dockerfile rewrite.</strong>
-            <code>DockerSwarm</code> modifies
-            <code>docker-images/spark-hadoop/Dockerfile</code> to COPY the
-            submitting user's algorithm JARs into the container image
-            (<code>/opt/jars/</code>). This isolates algorithm code per user.
-          </li>
-          <li>
-            <strong><code>submit-experiment.sh</code>.</strong>
-            Launched via <code>System.Diagnostics.Process</code>. Receives
-            ~20 positional arguments:
-            <ul>
-              <li>Environment username, log file path</li>
-              <li>Dataset path (relative to host filesystem)</li>
-              <li>Cluster parameters (node count, driver memory/cores, executor count/cores/memory, memory overhead)</li>
-              <li>Algorithm main class and JAR filename</li>
-              <li>HDFS base URL (<code>hdfs://master:8020</code>), local output directory, HDFS output path</li>
-              <li>Experiment ID (GUID)</li>
-              <li>Algorithm-specific parameters (sorted by <code>DriverIndex</code>)</li>
-            </ul>
-            The script builds the Docker image, deploys a Spark/Hadoop stack,
-            injects the dataset into HDFS, runs <code>spark-submit</code>,
-            and extracts results back to the host filesystem.
-          </li>
-          <li>
-            <strong>PID tracking.</strong>
-            After the subprocess starts, its PID is persisted to the database
-            (<code>ExperimentRequest.ProcessId</code>), enabling experiment
-            termination from the API.
-          </li>
-          <li>
-            <strong><code>cleanup.sh</code>.</strong>
-            Runs <strong>unconditionally</strong> after
-            <code>submit-experiment.sh</code> exits (success or failure).
-            Tears down the Docker stack, removes HDFS artifacts, with a
-            30-second timeout.
-          </li>
-          <li>
-            <strong>Result return.</strong>
-            Results are written to
-            <code>./results/{userId}/{experimentId}/</code> on the host
-            filesystem. The <code>DockerSwarm</code> service returns an
-            <code>ExperimentResponse</code> containing the exit code and
-            output file path.
-          </li>
-        </ol>
+        <ul>
+          <li>The returned <code>AsyncResult.id</code> is stored on the experiment (<code>celery_task_id</code>) so the task can be revoked for cancellation.</li>
+          <li>The broker is Redis (<code>CELERY_BROKER_URL</code>, default <code>redis://redis:6379/0</code>).</li>
+          <li>Tasks are auto-discovered via <code>app.autodiscover_tasks()</code> in <code>backend_config/celery.py</code>.</li>
+        </ul>
         <div class="callout">
           <span class="label">Key fact</span>
-          All cluster communication is <strong>one-way and
-          fire-and-forget</strong>: the backend calls out via shell scripts
-          and reads results from shared local disk. There is no API callback
-          from the cluster.
+          Cluster communication is one-way and fire-and-forget: the worker
+          shells out to <code>spark-submit</code> and reads the result file from
+          a shared directory. There is no callback from the cluster.
         </div>
       </section>
 
+      <section id="task">
+        <h2>The worker task (<code>run_db_script</code>)</h2>
+        <p>Defined in <code>experiments/tasks.py</code>. For a single experiment it:</p>
+        <ol>
+          <li>Sets status to <code>Running</code> and initializes the output file.</li>
+          <li>Builds the <code>spark-submit</code> command, injecting any <code>cluster_config</code> flags (<code>--driver-memory</code>, <code>--executor-memory</code>, <code>--executor-cores</code>, <code>--num-executors</code>) via <code>_build_cluster_args</code>.</li>
+          <li>Launches it with <code>subprocess.Popen</code> and records the PID on the experiment.</li>
+          <li>Streams combined stdout/stderr into the experiment's output file line by line (this is what the UI polls).</li>
+          <li>On exit, ingests the result file from <code>SPARK_SHARED_DIR</code> into Django storage and removes the shared copy.</li>
+          <li>Sets the final status to <code>Success</code>/<code>Failed</code> &mdash; unless a cancel flipped it to <code>Cancelled</code>, which is preserved.</li>
+        </ol>
+      </section>
+
       <section id="lifecycle">
-        <h2>Experiment lifecycle</h2>
-        <pre><code>WaitingInQueue &rarr; BeingExecuted &rarr; BeingProcessed &rarr; Finished
-                                                  &searr; Failed
-                  (any stage can transition to Failed on error)</code></pre>
+        <h2>Status lifecycle</h2>
+        <pre><code>Pending &rarr; Queued &rarr; Running &rarr; Success
+                              &searr; Failed
+                              &searr; Cancelled  (via the cancel endpoint)</code></pre>
         <table>
           <thead>
-            <tr><th>Status</th><th>Trigger</th><th>Timestamp</th></tr>
+            <tr><th>Status</th><th>Set by</th></tr>
           </thead>
           <tbody>
-            <tr><td><strong>WaitingInQueue</strong></td><td><code>ExperimentService.SubmitExperimentAsync</code> saves to DB and enqueues</td><td><code>CreatedAt</code></td></tr>
-            <tr><td><strong>BeingExecuted</strong></td><td><code>ExperimentService.RunExperimentAsync</code> picks up the experiment</td><td><code>StartTime</code></td></tr>
-            <tr><td><strong>BeingProcessed</strong></td><td><code>ProcessExperimentResultsAsync</code> begins saving result records</td><td>&mdash;</td></tr>
-            <tr><td><strong>Finished</strong></td><td>Result file path persisted to <code>ExperimentResult</code> table</td><td><code>EndTime</code></td></tr>
-            <tr><td><strong>Failed</strong></td><td>Any exception during execution or non-zero exit code</td><td><code>EndTime</code></td></tr>
+            <tr><td><strong>Pending</strong></td><td><code>create_experiment</code> (created, not yet queued)</td></tr>
+            <tr><td><strong>Queued</strong></td><td><code>run_experiment</code> / <code>run_script</code> on Celery dispatch</td></tr>
+            <tr><td><strong>Running</strong></td><td><code>run_db_script</code> when spark-submit launches</td></tr>
+            <tr><td><strong>Success / Failed</strong></td><td><code>run_db_script</code> based on the subprocess exit code</td></tr>
+            <tr><td><strong>Cancelled</strong></td><td><code>cancel_experiment</code> (preserved by the task)</td></tr>
           </tbody>
         </table>
-        <p>
-          Error messages are truncated to 255 characters (a database column
-          constraint) and stored on the <code>ExperimentRequest</code> record.
-        </p>
+      </section>
 
-        <h3>Submission flow (<code>SubmitExperimentAsync</code>)</h3>
+      <section id="cancel">
+        <h2>Cancellation</h2>
+        <p>
+          <code>cancel_experiment</code> only acts on active experiments
+          (<code>Pending</code>/<code>Queued</code>/<code>Running</code>) and is
+          two-pronged:
+        </p>
         <ol>
-          <li>Generate a new experiment GUID</li>
-          <li>Create <code>ExperimentRequest</code> entity (status: <code>WaitingInQueue</code>)</li>
-          <li>Create <code>ClusterParameters</code> entity (Spark/Docker resource config)</li>
-          <li>Create <code>ExperimentAlgorithmParameterValue</code> entities (algorithm-specific params)</li>
-          <li><strong>Atomic save</strong> &mdash; all three entity types persisted in a single <code>SaveChangesAsync()</code> call</li>
-          <li><strong>Enqueue</strong> &mdash; <code>_experimentQueue.QueueExperiment(experimentRequest)</code></li>
-          <li>Return experiment ID to the caller (HTTP 200 returns immediately)</li>
+          <li><strong>Revoke the Celery task</strong> (<code>revoke(terminate=True, signal='SIGTERM')</code>) so a still-queued task never starts.</li>
+          <li><strong>Kill the spark-submit PID</strong> (<code>os.kill(pid, SIGKILL)</code>) because once the worker is blocked in <code>subprocess.wait()</code>, only killing the OS process actually stops the job.</li>
         </ol>
-
-        <h3>Termination</h3>
         <p>
-          The <code>KillExperiment</code> method retrieves the stored
-          <code>ProcessId</code> and issues a process kill via the OS. It then
-          sets the experiment status to <code>Failed</code> and clears the
-          PID. Only experiments in active states (<code>WaitingInQueue</code>,
-          <code>BeingExecuted</code>, <code>BeingProcessed</code>) can be
-          killed.
+          It then sets status to <code>Cancelled</code> and clears the PID. This
+          mirrors the old gen's <code>ProcessId</code>-based kill &mdash; but as a
+          <code>POST</code>, since it mutates state.
         </p>
-      </section>
-
-      <section id="queue">
-        <h2>Channel-based queue</h2>
-        <p>
-          The experiment queue is the critical decoupling point between the
-          synchronous HTTP request path and the asynchronous background
-          execution path. It is built on
-          <code>System.Threading.Channels</code>.
-        </p>
-
-        <h3>Interface</h3>
-<pre><code>void QueueExperiment(ExperimentRequest experiment);           // non-blocking enqueue
-ValueTask&lt;ExperimentRequest&gt; DequeueAsync(CancellationToken); // async blocking dequeue</code></pre>
-
-        <h3>Implementation</h3>
-        <ul>
-          <li>Backed by an <strong>unbounded</strong> <code>Channel&lt;ExperimentRequest&gt;</code> (no capacity limit &mdash; bounded only by available memory)</li>
-          <li>Configured with <code>SingleReader = false, SingleWriter = false</code> (thread-safe for concurrent access)</li>
-          <li><strong>Enqueue</strong>: <code>_queue.Writer.TryWrite(experiment)</code> &mdash; non-blocking, always succeeds on an unbounded channel</li>
-          <li><strong>Dequeue</strong>: <code>_queue.Reader.ReadAsync(cancellationToken)</code> &mdash; suspends the calling task until an item is available or cancellation is requested</li>
-          <li>Registered as a <strong>Singleton</strong> in DI &mdash; one queue instance shared across the entire application lifetime</li>
-        </ul>
-
-        <h3>Why channels?</h3>
-        <p>
-          <code>System.Threading.Channels</code> provides a high-performance,
-          lock-free, async-aware producer/consumer primitive purpose-built
-          for .NET. Compared to alternatives:
-        </p>
-        <ul>
-          <li><code>ConcurrentQueue&lt;T&gt;</code> requires manual signaling (e.g., <code>SemaphoreSlim</code>) for async waiting; channels have this built in</li>
-          <li><code>BlockingCollection&lt;T&gt;</code> blocks threads rather than suspending tasks; wastes thread pool resources</li>
-          <li>External message queues (RabbitMQ, Redis) are unnecessary infrastructure for a single-process deployment</li>
-        </ul>
-      </section>
-
-      <section id="worker">
-        <h2>ExperimentWorkerService</h2>
-        <p>
-          <code>ExperimentWorkerService</code> extends ASP.NET Core's
-          <code>BackgroundService</code>, which means it starts automatically
-          with the application and runs for the lifetime of the host.
-        </p>
-<pre><code>ExecuteAsync (entry point)
-  &lfloor; creates _workerCount worker tasks (currently 1)
-      &lfloor; each runs RunWorkerAsync(workerId, stoppingToken)
-          &lfloor; infinite loop:
-              &mdash; await _experimentQueue.DequeueAsync(token)
-              &mdash; create DI scope (for scoped services like EF Core)
-              &mdash; resolve ExperimentService from scope
-              &mdash; await experimentService.RunExperimentAsync(request)</code></pre>
-
-        <h3>Key design decisions</h3>
-        <ul>
-          <li><strong>Single worker</strong> (<code>_workerCount = 1</code>) &mdash; experiments execute <strong>sequentially</strong>, one at a time. The architecture supports multiple workers, but currently enforces serial execution.</li>
-          <li><strong>DI scope per experiment</strong> &mdash; each dequeued experiment gets its own <code>IServiceScope</code>, ensuring a fresh <code>DbContext</code> and preventing cross-experiment state leaks.</li>
-          <li><strong>Fault tolerance</strong> &mdash; exceptions are caught and logged but do not crash the worker loop. After a failure, the worker immediately proceeds to dequeue the next experiment.</li>
-          <li><strong>Graceful shutdown</strong> &mdash; <code>CancellationToken</code> propagates through <code>DequeueAsync</code> and <code>RunExperimentAsync</code>. On shutdown, pending dequeue operations are cancelled and the worker exits cleanly.</li>
-        </ul>
-
-        <h3>Sequential execution &mdash; current state and future goals</h3>
-        <p>
-          The current system processes experiments <strong>one at a
-          time</strong> due to <code>_workerCount = 1</code>. This is a known
-          limitation and one of the project's major goals for improvement.
-        </p>
-        <p>
-          <strong>Current behavior:</strong>
-        </p>
-        <ul>
-          <li>If 5 experiments are submitted, they queue up and execute in FIFO order</li>
-          <li>Experiment 2 does not begin until experiment 1 finishes (or fails)</li>
-          <li>The Docker Swarm cluster sits idle between experiments during status updates and result processing</li>
-        </ul>
-        <p>
-          <strong>Paths toward parallel execution:</strong>
-        </p>
-        <ul>
-          <li>
-            <strong>Increase <code>_workerCount</code></strong> &mdash; the
-            simplest change. However, the <code>DockerSwarm</code> singleton
-            modifies a shared Dockerfile, so concurrent experiments would
-            race on it. There's also cluster resource contention and
-            non-deterministic status update ordering to consider.
-          </li>
-          <li>
-            <strong>Per-experiment stack isolation</strong> &mdash; the
-            execution layer already names stacks with experiment IDs
-            (<code>{workdir}_{experimentId[:12]}</code>), suggesting the
-            shell scripts were designed with parallelism in mind. The
-            Dockerfile race could be resolved by templating per-experiment
-            Dockerfiles.
-          </li>
-          <li>
-            <strong>External job scheduler</strong> &mdash; replace the
-            in-process channel with an external queue (Redis, RabbitMQ) to
-            support multi-node API deployments and durable job persistence
-            across restarts.
-          </li>
-        </ul>
       </section>
 
       <section id="schema">
-        <h2>Database schema (key entities)</h2>
+        <h2>Data models (key fields)</h2>
 
-        <h3>ExperimentRequest</h3>
+        <h3>SparkExperiment <span style="font-weight:400;">(<code>experiments/models.py</code>)</span></h3>
         <table>
-          <thead>
-            <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
-          </thead>
+          <thead><tr><th>Field</th><th>Type</th><th>Notes</th></tr></thead>
           <tbody>
-            <tr><td>ExperimentID</td><td>Guid (PK)</td><td>Generated at submission</td></tr>
-            <tr><td>UserID</td><td>string (FK &rarr; Users)</td><td>Experiment owner</td></tr>
-            <tr><td>AlgorithmID</td><td>int (FK &rarr; Algorithms)</td><td>Algorithm to execute</td></tr>
-            <tr><td>ExperimentName</td><td>string</td><td>User-provided name</td></tr>
-            <tr><td>DatasetName</td><td>string</td><td>Name of the dataset to use</td></tr>
-            <tr><td>Status</td><td>enum</td><td>WaitingInQueue, BeingExecuted, BeingProcessed, Finished, Failed</td></tr>
-            <tr><td>ProcessId</td><td>int</td><td>OS PID of <code>submit-experiment.sh</code></td></tr>
-            <tr><td>StartTime / EndTime</td><td>DateTime</td><td>Set on status transitions</td></tr>
-            <tr><td>ErrorMessage</td><td>string (max 255)</td><td>Populated on failure</td></tr>
-            <tr><td>CreatedAt</td><td>DateTime</td><td>Submission timestamp</td></tr>
+            <tr><td>id</td><td>UUID (PK)</td><td></td></tr>
+            <tr><td>user</td><td>FK &rarr; User</td><td>Owner</td></tr>
+            <tr><td>script</td><td>FK &rarr; Script</td><td>Algorithm to run</td></tr>
+            <tr><td>dataset</td><td>FK &rarr; CSVDataset</td><td>Nullable</td></tr>
+            <tr><td>status</td><td>char</td><td>Pending/Queued/Running/Success/Failed/Cancelled</td></tr>
+            <tr><td>args</td><td>text</td><td>Optional CLI args</td></tr>
+            <tr><td>celery_task_id</td><td>char</td><td>For revocation</td></tr>
+            <tr><td>process_id</td><td>int</td><td>spark-submit PID, for kill</td></tr>
+            <tr><td>cluster_config</td><td>JSON</td><td>nodes/cores/driver_memory/executor_memory</td></tr>
+            <tr><td>output / result</td><td>File</td><td>Live log + ingested result</td></tr>
+            <tr><td>created_at</td><td>datetime</td><td></td></tr>
           </tbody>
         </table>
 
-        <h3>ClusterParameters</h3>
+        <h3>Script <span style="font-weight:400;">(<code>scripts/models.py</code>)</span></h3>
         <table>
-          <thead>
-            <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
-          </thead>
+          <thead><tr><th>Field</th><th>Type</th><th>Notes</th></tr></thead>
           <tbody>
-            <tr><td>ClusterParamID</td><td>int (PK)</td><td></td></tr>
-            <tr><td>ExperimentID</td><td>Guid (FK)</td><td>One-to-one with ExperimentRequest</td></tr>
-            <tr><td>NodeCount</td><td>int</td><td>Number of worker nodes</td></tr>
-            <tr><td>DriverMemory</td><td>string</td><td>e.g., "5g"</td></tr>
-            <tr><td>DriverCores</td><td>int</td><td></td></tr>
-            <tr><td>ExecutorNumber</td><td>int</td><td>Number of Spark executors</td></tr>
-            <tr><td>ExecutorCores</td><td>int</td><td></td></tr>
-            <tr><td>ExecutorMemory</td><td>string</td><td>e.g., "5g"</td></tr>
-            <tr><td>MemoryOverhead</td><td>int</td><td>Spark memory overhead (MB)</td></tr>
+            <tr><td>id</td><td>UUID (PK)</td><td></td></tr>
+            <tr><td>name / file_type / file</td><td>&mdash;</td><td>py or jar</td></tr>
+            <tr><td>main_class</td><td>char</td><td>For JARs</td></tr>
+            <tr><td>parameters</td><td>JSON</td><td><code>[{name, type, default, driver_index}]</code> &mdash; feeds the sweep engine</td></tr>
+            <tr><td>access_level</td><td>char</td><td>private/public</td></tr>
           </tbody>
         </table>
 
-        <h3>StoredDataSet</h3>
-        <table>
-          <thead>
-            <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>DataSetID</td><td>int (PK)</td><td></td></tr>
-            <tr><td>UserID</td><td>string (FK &rarr; Users)</td><td>Dataset owner</td></tr>
-            <tr><td>Name</td><td>string</td><td>Display name</td></tr>
-            <tr><td>FilePath</td><td>string</td><td>Relative path to CSV on disk</td></tr>
-            <tr><td>UploadedAt</td><td>DateTime</td><td></td></tr>
-          </tbody>
-        </table>
-
-        <h3>ExperimentResult</h3>
-        <table>
-          <thead>
-            <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>ResultID</td><td>int (PK)</td><td></td></tr>
-            <tr><td>ExperimentID</td><td>Guid (FK)</td><td></td></tr>
-            <tr><td>ResultFilePath</td><td>string</td><td>Path to output file on disk</td></tr>
-            <tr><td>CreatedAt</td><td>DateTime</td><td></td></tr>
-          </tbody>
-        </table>
+        <h3>CSVDataset <span style="font-weight:400;">(<code>datasets/models.py</code>)</span></h3>
+        <p>UUID PK, owner FK, <code>name</code>, <code>file</code>, <code>access_level</code>, <code>uploaded_at</code>.</p>
       </section>
 
-      <section id="paths">
-        <h2>File system paths</h2>
-        <table>
-          <thead>
-            <tr><th>Path</th><th>Purpose</th></tr>
-          </thead>
-          <tbody>
-            <tr><td><code>./results/{userId}/{experimentId}/</code></td><td>Per-experiment output directory</td></tr>
-            <tr><td><code>./results/{userId}/{experimentId}/{experimentId}_log.txt</code></td><td>Execution log (streamed via WebSocket)</td></tr>
-            <tr><td><code>./Datasets/</code></td><td>Uploaded user datasets (CSV files)</td></tr>
-            <tr><td><code>./TempUploads/{uploadId}/</code></td><td>Staging directory for chunked uploads</td></tr>
-            <tr><td><code>./exports/{userId}/aggregate_data/{aggregateResultId}/</code></td><td>Aggregated multi-experiment results</td></tr>
-            <tr><td><code>./docker-images/spark-hadoop/Dockerfile</code></td><td>Dynamically rewritten per experiment</td></tr>
-            <tr><td><code>hdfs://master:8020</code></td><td>HDFS base URL for intermediate cluster storage</td></tr>
-          </tbody>
-        </table>
-      </section>
-
-      <section id="errors">
-        <h2>Error handling strategy</h2>
-        <table>
-          <thead>
-            <tr><th>Layer</th><th>Strategy</th></tr>
-          </thead>
-          <tbody>
-            <tr><td><strong>ExperimentWorkerService</strong></td><td>Catches all exceptions; logs and continues to next experiment. <code>TaskCanceledException</code> handled for graceful shutdown.</td></tr>
-            <tr><td><strong>ExperimentService.RunExperimentAsync</strong></td><td>Catches all exceptions; updates experiment status to <code>Failed</code> with error message.</td></tr>
-            <tr><td><strong>DockerSwarm.SubmitExperiment</strong></td><td>Reads stderr asynchronously; always runs <code>cleanup.sh</code> regardless of success/failure; returns error code to caller.</td></tr>
-            <tr><td><strong>Status updates</strong></td><td>Inner try/catch prevents status-update failures from masking the original error.</td></tr>
-          </tbody>
-        </table>
+      <section id="sweeps">
+        <h2>Sweep placeholder</h2>
+        <div class="callout">
+          <span class="label">PLACEHOLDER &middot; Fall 2026</span>
+          <p style="margin: 0.4rem 0 0;">
+            The <code>sweeps</code> app defines the <strong>schema only</strong>
+            for the Parameter Sweep Engine: a <code>Sweep</code> model
+            (name, user, script, dataset, <code>parameter_ranges</code> JSON,
+            status, M2M to experiments), a <code>SweepSerializer</code>, and three
+            views (<code>sweep_list</code>, <code>sweep_detail</code>,
+            <code>sweep_cancel</code>) that all return
+            <code>501 Not Implemented</code>. The full engine &mdash; cartesian
+            product expansion of <code>parameter_ranges</code>, batch Celery
+            dispatch, progress aggregation, cancel-all &mdash; is a Fall&nbsp;2026
+            group deliverable and should live in
+            <code>core/services/sweep_engine.py</code>. See the
+            <code>Sweep</code> model docstring for the full to-do list.
+          </p>
+        </div>
       </section>
     </main>
   </div>
 
   <footer class="site-footer">
-    PICARD Onboarding Portal &middot; v0.2 draft &middot; PICARD 2026.08 team
+    PICARD Onboarding Portal &middot; new generation (Django/React) &middot; PICARD 2026 team
   </footer>
 </body>
 </html>

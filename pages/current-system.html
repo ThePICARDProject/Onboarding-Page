@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Current System · PICARD2 Onboarding</title><link rel="stylesheet" href="../assets/styles.css"></head>
+<body>
+<header class="topnav"><div class="brand">PICARD2 <span>TEAM ONBOARDING</span></div><nav><a href="../index.html">Overview</a><a class="active" href="current-system.html">Current System</a><a href="migration.html">Migration</a><a href="roadmap.html">Roadmap</a><a href="getting-started.html">Getting Started</a></nav></header>
+<div class="page with-sidebar">
+  <aside class="subnav"><div class="label">On this page</div><ul><li><a href="#architecture">Architecture</a></li><li><a href="#model">Domain model</a></li><li><a href="#flows">User flows</a></li><li><a href="#status">Implementation status</a></li><li><a href="#defects">Confirmed defects</a></li><li><a href="#confidence">Confidence level</a></li></ul></aside>
+  <main>
+    <section id="architecture"><div class="eyebrow">PICARD2 · active codebase</div><h1>Current system</h1><p class="lead">PICARD2 is a rewrite, not a framework-for-framework port. It has better service boundaries and useful new behavior, but static presence does not prove an end-to-end workflow.</p>
+      <div class="pipeline"><span>React 19 SPA</span><b>→ session + CSRF →</b><span>Django / DRF</span><b>→</b><span>MySQL + media</span></div>
+      <div class="pipeline"><span>Django / DRF</span><b>→</b><span>Redis</span><b>→</b><span>Celery worker (concurrency 1)</span><b>→ spark-submit →</b><span>Spark master</span><b>→</b><span>Spark worker</span></div>
+      <p>The local topology is defined in <code>PICARD2/docker-compose.yml</code>. Uploaded files live in Django media storage; Spark inputs and outputs also cross shared Docker volumes.</p>
+    </section>
+    <section id="model"><h2>Current domain model</h2><table><thead><tr><th>Entity</th><th>What PICARD2 stores</th><th>Important limitation</th></tr></thead><tbody>
+      <tr><td>User</td><td>Django user plus GitHub session profile</td><td>GitHub OAuth requires membership in <code>ThePICARDProject</code>.</td></tr>
+      <tr><td>CSVDataset</td><td>UUID, owner, name, visibility, CSV file, upload time</td><td>No description, detail/download API, or chunked upload.</td></tr>
+      <tr><td>Script</td><td>UUID, owner, Python/JAR file, visibility, optional JAR main class</td><td>No versioned algorithm definition or typed parameters.</td></tr>
+      <tr><td>SparkExperiment</td><td>UUID, owner, script, optional dataset, status, free-form args, output/result files, created time</td><td>No name, configuration snapshot, structured results, full lifecycle, or cancellation.</td></tr>
+    </tbody></table></section>
+    <section id="flows"><h2>Intended user flows</h2><div class="cards">
+      <div class="card"><h3>Authentication</h3><p>GitHub OAuth, organization gate, cookie-backed Django session, and CSRF token. Password endpoints exist but are not exposed in the current UI.</p></div>
+      <div class="card"><h3>Asset management</h3><p>Upload, list, share privately/publicly, and delete CSV datasets and Python/JAR scripts through the workspace provider.</p></div>
+      <div class="card"><h3>Experiment execution</h3><p>Create a pending experiment, queue it through Celery, invoke <code>spark-submit</code>, and poll summaries every 12 seconds.</p></div>
+      <div class="card"><h3>Results</h3><p>The application should write to a supplied result path and Celery should import the artifact. The current contracts disagree, so this is not coherent yet.</p></div>
+    </div></section>
+    <section id="status"><h2>Status by area</h2><table><thead><tr><th>Area</th><th>Status</th><th>Current assessment</th></tr></thead><tbody>
+      <tr><td>Architecture foundation</td><td><span class="status good">Present</span></td><td>React, Django/DRF, MySQL, Redis/Celery, and Spark standalone are wired in Compose.</td></tr>
+      <tr><td>Authentication</td><td><span class="status partial">Retest</span></td><td>GitHub organization-gated session flow is implemented; runtime configuration and end-to-end behavior need documentation and tests.</td></tr>
+      <tr><td>Assets</td><td><span class="status partial">Partial</span></td><td>Basic CRUD and sharing exist; metadata, robust server validation, download/edit/versioning, and large uploads are unresolved.</td></tr>
+      <tr><td>Single experiment</td><td><span class="status bad">Broken</span></td><td>The main contracts contain multiple confirmed defects. Do not build sweeps on this path.</td></tr>
+      <tr><td>Results and operations</td><td><span class="status bad">Incomplete</span></td><td>Result discovery/storage disagree; cancellation, structured results, aggregation, export, and visualization are absent.</td></tr>
+      <tr><td>Automated verification</td><td><span class="status bad">Missing</span></td><td>No meaningful test suite was found. Runtime characterization is still required.</td></tr>
+    </tbody></table></section>
+    <section id="defects"><h2>Confirmed high-priority defects</h2><ol class="steps">
+      <li>UUID primary keys are routed through integer URL converters.</li><li>The worker and API use incompatible result filenames and locations.</li><li>Experiment detail returns a file field instead of reading log text.</li><li>Stored experiment arguments are never passed to <code>spark-submit</code>.</li><li>JAR <code>--class</code> options are placed after the application resource.</li><li>Result ownership is split across Django storage and a shared Spark volume.</li><li>Rerun cleanup and referenced-asset deletion semantics are unsafe or ambiguous.</li><li>Important upload checks exist only in the browser.</li><li>The Python/JAR invocation and output contract is undocumented.</li>
+    </ol></section>
+    <section id="confidence"><h2>What has been validated</h2><div class="callout warn"><strong>Static assessment, not a runtime certification</strong>Python source compilation passed on 2026-07-16. The frontend build could not start because dependencies were not installed. The full Docker stack, authentication flow, and Spark experiment path have not yet been proven from a clean environment.</div></section>
+  </main>
+</div><footer class="footer">PICARD2 Onboarding · current system · assessed 2026-07-16</footer></body></html>

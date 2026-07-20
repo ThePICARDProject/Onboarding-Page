@@ -1,157 +1,72 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PICARD Onboarding Portal</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PICARD2 Onboarding</title>
   <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
   <header class="topnav">
-    <div class="brand">PICARD <span>Onboarding</span></div>
+    <div class="brand">PICARD2 <span>TEAM ONBOARDING</span></div>
     <nav>
-      <a href="index.html" class="active">Home</a>
-      <a href="pages/architecture.html">Architecture</a>
-      <a href="pages/presentation.html">Presentation</a>
-      <a href="pages/application.html">Application</a>
-      <a href="pages/execution.html">Execution</a>
-      <a href="pages/setup.html">Setup</a>
+      <a class="active" href="index.html">Overview</a>
+      <a href="pages/current-system.html">Current System</a>
+      <a href="pages/migration.html">Migration</a>
+      <a href="pages/roadmap.html">Roadmap</a>
+      <a href="pages/getting-started.html">Getting Started</a>
     </nav>
   </header>
 
-  <div class="page">
-    <div class="hero">
-      <div class="eyebrow">PICARD &middot; West Virginia University</div>
-      <h1>Welcome to the PICARD project.</h1>
-      <p>
-        PICARD is a research platform that lets students and faculty run
-        computationally heavy algorithms on a dedicated Hadoop/Spark cluster
-        without having to wire up the infrastructure themselves.
-      </p>
-      <div class="cta-row">
-        <a href="pages/setup.html" class="btn primary">Start the setup &rarr;</a>
-        <a href="pages/architecture.html" class="btn">Learn the architecture</a>
+  <main class="page">
+    <section class="hero">
+      <div class="eyebrow">Active implementation · updated 2026-07-16</div>
+      <h1>PICARD is migrating.</h1>
+      <p>PICARD2 replaces the legacy stack with React, Django, Celery, Redis, MySQL, and a standalone Spark cluster. It is the codebase the incoming implementation team should develop—but its central experiment path still needs repair and several required PICARD1 concepts have not yet been reimplemented.</p>
+      <div class="actions">
+        <a class="button primary" href="pages/current-system.html">Understand PICARD2 →</a>
+        <a class="button" href="pages/roadmap.html">See the implementation plan</a>
       </div>
-    </div>
-
-    <section>
-      <h2>What is PICARD?</h2>
-      <p>
-        PICARD provides a web-based interface to a Spark/Hadoop cluster running
-        on dedicated hardware in a WVU building. Researchers upload their
-        algorithms (as Scala JARs) and datasets (as CSVs), configure cluster
-        resources, and submit experiments through a browser. The platform
-        handles authentication, queueing, distributed execution, and result
-        delivery.
-      </p>
-      <p>
-        The project was originally inspired by Dr. Devine's master's thesis on
-        <strong>CoDRIFt</strong>, a custom RandomForest algorithm for
-        astronomically large datasets. The original CoDRIFt work required
-        wiring together 20+ PCs by hand to get acceptable performance &mdash;
-        PICARD productizes that experience for anyone in the lab.
-      </p>
     </section>
 
     <section>
-      <h2>The three layers</h2>
-      <p class="lead">
-        PICARD is built as three loosely coupled layers. Each layer has a
-        single, clear responsibility, and they communicate over well-defined
-        boundaries. Click any card to dive in.
-      </p>
+      <div class="callout warn">
+        <strong>Team directive</strong>
+        Stabilize and complete the selected migration before implementing hyperparameter sweeps. PICARD1 is evidence of prior behavior, not a specification to copy blindly.
+      </div>
+      <h2>The situation in one minute</h2>
       <div class="cards">
-        <a href="pages/presentation.html" class="card linkable layer-pres">
-          <h3>Presentation Layer</h3>
-          <p>
-            React + Vite single-page app on port 5173. Handles login, file
-            uploads, experiment configuration, and real-time result streaming.
-            This is what users see and click.
-          </p>
-        </a>
-        <a href="pages/application.html" class="card linkable layer-app">
-          <h3>Application Layer</h3>
-          <p>
-            .NET 8 REST API on port 5080. Owns authentication, persistence
-            (MySQL/MariaDB), the experiment queue, and orchestration of the
-            cluster via shell scripts. The brain of the system.
-          </p>
-        </a>
-        <a href="pages/execution.html" class="card linkable layer-exec">
-          <h3>Execution Layer</h3>
-          <p>
-            Docker Swarm running per-experiment Hadoop/Spark stacks. HDFS for
-            storage, YARN for scheduling, Spark for the actual computation.
-            Where algorithms actually run.
-          </p>
-        </a>
+        <div class="card"><h3>What is new</h3><p>A cleaner Django/DRF API, React 19 frontend, GitHub organization login, UUID-owned public/private assets, Celery/Redis queueing, and Spark standalone execution.</p></div>
+        <div class="card"><h3>What works on paper</h3><p>Authentication, CSV and Python/JAR asset management, experiment records, asynchronous queueing, status polling, and a containerized local topology are present in the code.</p></div>
+        <div class="card"><h3>What is broken</h3><p>UUID routes, argument forwarding, JAR command ordering, log serialization, result naming/storage, rerun cleanup, and parts of validation prevent calling the single-run path reliable.</p></div>
+        <div class="card"><h3>What is missing</h3><p>Structured parameters and results, run names and lifecycle detail, cancellation, robust tests, and product decisions on large uploads, aggregation, export, and visualization.</p></div>
       </div>
-      <p>
-        For a side-by-side view of all three layers and how they connect, see
-        the <a href="pages/architecture.html">architecture overview</a>.
-      </p>
     </section>
 
     <section>
-      <h2>How a request flows through the system</h2>
-      <p>
-        At a high level, every experiment follows the same path. The frontend
-        collects configuration and hands it to the backend, the backend
-        persists it and queues it, a background worker dequeues it and
-        launches a fresh Spark cluster on the swarm, results are written back
-        to disk, and the frontend streams the logs and final output to the
-        user's browser.
-      </p>
+      <h2>Order of work</h2>
       <div class="pipeline">
-        <span class="stage">Browser</span>
-        <span class="arrow">&rarr;</span>
-        <span class="stage">React (Vite, 5173)</span>
-        <span class="arrow">&rarr;</span>
-        <span class="stage">.NET API (5080)</span>
-        <span class="arrow">&rarr;</span>
-        <span class="stage">MySQL + Channel queue</span>
-        <span class="arrow">&rarr;</span>
-        <span class="stage">DockerSwarm service</span>
-        <span class="arrow">&rarr;</span>
-        <span class="stage">submit-experiment.sh</span>
-        <span class="arrow">&rarr;</span>
-        <span class="stage">Spark on Hadoop/HDFS</span>
-        <span class="arrow">&rarr;</span>
-        <span class="stage">Result file</span>
+        <span>Align retained scope</span><b>→</b><span>Make startup reproducible</span><b>→</b><span>Repair one complete run</span><b>→</b><span>Restore sweep-ready domain model</span><b>→</b><span>Complete selected parity</span><b>→</b><span>Build sweeps</span>
+      </div>
+      <p>The immediate success target is an authenticated user who can manage supported assets, configure a structured experiment, run it reliably on Spark, observe and cancel it, inspect/download results, and recover sensibly from failures.</p>
+    </section>
+
+    <section>
+      <h2>Choose your next page</h2>
+      <div class="cards">
+        <a class="card" href="pages/current-system.html"><h3>Current System</h3><p>Architecture, data model, user flows, known defects, and what has actually been validated.</p></a>
+        <a class="card" href="pages/migration.html"><h3>Migration</h3><p>What PICARD1 had, what PICARD2 has, and which capabilities need explicit decisions.</p></a>
+        <a class="card" href="pages/roadmap.html"><h3>Roadmap</h3><p>The incoming team's phased plan, exit criteria, first backlog, and post-migration sweep direction.</p></a>
+        <a class="card" href="pages/getting-started.html"><h3>Getting Started</h3><p>Repository map, reading order, honest setup status, and first contribution guidance.</p></a>
       </div>
     </section>
 
     <section>
-      <h2>Where to go next</h2>
-      <div class="cards">
-        <a href="pages/setup.html" class="card linkable">
-          <h3>I want to run it locally</h3>
-          <p>
-            Step-by-step instructions for SSH gateway access, port tunneling,
-            and starting the frontend + backend.
-          </p>
-        </a>
-        <a href="pages/architecture.html" class="card linkable">
-          <h3>I want to understand the system</h3>
-          <p>
-            Architecture overview connecting all three layers, with diagrams
-            and request lifecycles.
-          </p>
-        </a>
-        <a href="https://github.com/ThePICARDProject" class="card linkable">
-          <h3>I want to read the code</h3>
-          <p>
-            Frontend (<code>481-FrontEnd</code>) and backend
-            (<code>API-backend</code>) live under the
-            <code>ThePICARDProject</code> GitHub org.
-          </p>
-        </a>
-      </div>
+      <h2>Historical PICARD1 portal</h2>
+      <p>The prior onboarding portal describes the ASP.NET Core, Docker Swarm, Hadoop/HDFS, and YARN implementation. It is preserved unchanged for historical reference, but its architecture and setup instructions are deprecated.</p>
+      <a class="button" href="archive/picard1/index.html">Open the archived PICARD1 portal</a>
     </section>
-  </div>
-
-  <footer class="site-footer">
-    PICARD Onboarding Portal &middot; v0.2 draft &middot; PICARD 2026.08 team
-  </footer>
+  </main>
+  <footer class="footer">PICARD2 Onboarding Portal · migration status edition · updated 2026-07-20</footer>
 </body>
 </html>

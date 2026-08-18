@@ -35,6 +35,10 @@
         <div class="eyebrow">Searching for Needles in the Cosmic Haystack · Thomas Ryan Devine, 2020</div>
         <h1>The research behind PICARD</h1>
         <p class="lead">Devine’s dissertation asks how scalable machine learning can identify and classify rare pulsar candidates in immense radio-astronomy datasets. PICARD exists to make continued experimentation on that problem practical.</p>
+        <div class="actions">
+          <a class="button primary" href="../assets/docs/devine-dissertation.pdf" target="_blank" rel="noopener">Open Dissertation PDF ↗</a>
+          <a class="button" href="../assets/docs/devine-dissertation.pdf" download="Thomas-Ryan-Devine-Dissertation.pdf">Download PDF</a>
+        </div>
         <div class="callout"><strong>Research objective</strong>Develop scalable machine-learning solutions for candidate identification and classification when the data are very large, positive examples are extremely rare, and reliable human labels are expensive.</div>
         <p>A focused path through the dissertation includes the abstract and Sections 1.1–1.3, Section 6.1 for the scientific workflow, Chapters 8–9 for D-RAPID and CoDRIFt, and Chapter 10 for the research horizon.</p>
       </section>
@@ -56,7 +60,7 @@
         <div class="phase"><h3>1 · Pre-process events</h3><p>Transform the search output into files describing individual single-pulse events in a form the later stages can analyze.</p></div>
         <div class="phase"><h3>2 · Cluster and extract features</h3><p>Use a customized DBSCAN process to group related events, repair domain-specific clustering artifacts, and derive characteristic features for each cluster.</p></div>
         <div class="phase"><h3>3 · Identify candidates at scale</h3><p>Use D-RAPID, the distributed Spark version of RAPID, to find peaks that may represent real single pulses.</p></div>
-        <div class="phase"><h3>4 · Classify and evaluate</h3><p>Build and compare machine-learning models—including supervised and semi-supervised approaches—to distinguish pulsar candidates from noise and interference.</p></div>
+        <div class="phase"><h3>4 · Classify and evaluate</h3><p>Build and compare machine-learning models, including supervised and semi-supervised approaches, to distinguish pulsar candidates from noise and interference.</p></div>
         <div class="pipeline"><span>Pre-process</span><b>→</b><span>Cluster + extract features</span><b>→</b><span>Identify candidates</span><b>→</b><span>Classify + evaluate</span></div>
       </section>
 
@@ -66,17 +70,17 @@
           <thead><tr><th>Contribution</th><th>Role in the research</th><th>Platform implication</th></tr></thead>
           <tbody>
             <tr><td>RAPID</td><td>A parallel candidate-identification algorithm that finds characteristic peaks in single-pulse data.</td><td>Researchers need to run data-intensive algorithms with explicit inputs, parameters, and outputs.</td></tr>
-            <tr><td>D-RAPID</td><td>A Scala/Spark redesign of RAPID for distributed candidate identification; it executed up to five times faster than the multithreaded version in the reported evaluation.</td><td>Distributed execution and performance measurement are part of the science, not hidden implementation details.</td></tr>
+            <tr><td>D-RAPID</td><td>A Scala/Spark redesign of RAPID for distributed candidate identification; it executed up to five times faster than the multithreaded version in the reported evaluation.</td><td>The scientific evaluation includes distributed execution and performance measurement.</td></tr>
             <tr><td>ALM</td><td>An automated multiclass labeling method that groups candidates using physical and extracted features.</td><td>The experiment model preserves the exact method, configuration, and dataset used to generate a result.</td></tr>
             <tr><td>CoDRIFt</td><td>A distributed, semi-supervised Random-Forest method designed for very large, highly imbalanced datasets with few labeled minority examples.</td><td>The platform represents complex algorithm parameters and class-aware scientific metrics.</td></tr>
           </tbody>
         </table>
-        <p>The dissertation’s distributed implementations used Scala and Spark on Hadoop/YARN. PICARD2 uses a different execution environment. Continuing the research means preserving the ability to conduct distributed, reproducible experiments—not preserving a particular cluster stack forever.</p>
+        <p>The dissertation’s distributed implementations used Scala and Spark on Hadoop/YARN. PICARD2 uses a different execution environment. Continued research depends on distributed, reproducible experiments, while the cluster stack can evolve with the platform.</p>
       </section>
 
       <section id="evaluation">
         <h2>How the research learns</h2>
-        <p>Devine’s conclusions were built from controlled comparison, not from a single successful run. The dissertation reports 34,981 experimental trials across algorithms, imbalance treatments, labeling schemes, feature-selection methods, datasets, training proportions, and distributed-resource choices.</p>
+        <p>Devine built his conclusions through controlled comparison across 34,981 experimental trials. The trials covered algorithms, imbalance treatments, labeling schemes, feature-selection methods, datasets, training proportions, and distributed-resource choices.</p>
         <div class="cards">
           <div class="card"><h3>Classification performance</h3><p>Metrics such as recall, precision, and F-measure describe how well a model finds the rare positive class without overwhelming researchers with false positives.</p></div>
           <div class="card"><h3>Execution performance</h3><p>Elapsed time, training time, testing time, and scaling behavior show whether an approach can handle the volume of real astronomical data.</p></div>
@@ -93,7 +97,7 @@
           <li><strong>Improve and evaluate CoDRIFt.</strong> Reduce training time, tune parameters, improve precision where possible, and test on more astronomy datasets and other very large imbalanced domains such as fraud and cybercrime.</li>
           <li><strong>Explore online learning.</strong> Adapt the workflow to data streams for real-time radio processing, taking advantage of Spark’s streaming capabilities.</li>
         </ol>
-        <p>These are the research horizon, not all commitments for the current semester. The platform first needs a dependable experiment loop on which those directions can build.</p>
+        <p>These directions define the longer research horizon. This semester centers on the dependable experiment loop that will support them.</p>
       </section>
 
       <section id="picard">
@@ -105,10 +109,10 @@
           <div class="card"><h3>Efficient iteration</h3><p>Structured parameter studies and comparison turn repeated manual submissions into an intentional research workflow.</p></div>
           <div class="card"><h3>Room to grow</h3><p>A stable experiment contract accommodates more algorithms, workflow stages, datasets, metrics, domains, and execution models over time.</p></div>
         </div>
-        <div class="callout warn"><strong>Role of the dissertation</strong>It explains the scientific problem, methods, evidence, and future direction. It does not prescribe PICARD’s interface or require every future research idea to appear in the first usable release.</div>
+        <div class="callout warn"><strong>Role of the dissertation</strong>It explains the scientific problem, methods, evidence, and future direction. PICARD’s interface and first usable release are product decisions shaped by current capabilities and scope.</div>
       </section>
     </main>
   </div>
-  <footer class="footer">PICARD Project Onboarding · scalable experiments for rare-event research</footer>
+  <footer class="footer">PICARD Project Onboarding · Research Foundation</footer>
 </body>
 </html>

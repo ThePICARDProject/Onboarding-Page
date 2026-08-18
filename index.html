@@ -23,9 +23,10 @@
     <section class="hero">
       <div class="eyebrow">West Virginia University · distributed machine-learning research</div>
       <h1>Welcome to PICARD.</h1>
-      <p>PICARD is a research platform created to continue Dr. Thomas Devine’s graduate work on scalable machine learning for finding rare transient signals in enormous, highly imbalanced datasets. Its purpose is to help researchers configure, run, observe, and compare distributed experiments without having to assemble the computing infrastructure by hand.</p>
+      <p>PICARD is a research platform created to continue Dr. Thomas Devine’s graduate work on scalable machine learning for finding rare transient signals in enormous, highly imbalanced datasets. It helps researchers configure, run, observe, and compare distributed experiments while the platform manages the computing infrastructure.</p>
       <div class="actions">
         <a class="button primary" href="pages/research.html">Research Foundation →</a>
+        <a class="button" href="assets/docs/devine-dissertation.pdf" target="_blank" rel="noopener">Read Devine’s Dissertation ↗</a>
         <a class="button" href="pages/current-system.html">PICARD2 Today</a>
       </div>
     </section>
@@ -42,7 +43,7 @@
 
     <section id="origin">
       <h2>From Devine’s research to PICARD</h2>
-      <p>Devine developed a scalable workflow for identifying and classifying transient radio signals. His work produced distributed Spark algorithms—including D-RAPID for candidate identification and CoDRIFt for semi-supervised classification—and evaluated machine-learning choices across tens of thousands of experimental trials.</p>
+      <p>Devine developed a scalable workflow for identifying and classifying transient radio signals. His work produced two distributed Spark algorithms: D-RAPID for candidate identification and CoDRIFt for semi-supervised classification. He evaluated machine-learning choices across tens of thousands of experimental trials.</p>
       <p>PICARD carries that work forward as a shared research environment. Its intended form makes distributed experimentation approachable while preserving the rigor of the underlying science: explicit inputs, reproducible configurations, observable execution, meaningful metrics, and comparable results.</p>
       <div class="pipeline"><span>Research data</span><b>→</b><span>Algorithm + parameters</span><b>→</b><span>Distributed execution</span><b>→</b><span>Metrics + artifacts</span><b>→</b><span>Compare, learn, refine</span></div>
     </section>
@@ -50,17 +51,17 @@
     <section id="identity">
       <h2>What kind of project is PICARD?</h2>
       <div class="cards">
-        <div class="card"><h3>A scientific experiment platform</h3><p>PICARD is organized around research questions, datasets, algorithms, controlled configurations, trials, and evidence—not merely around launching jobs.</p></div>
+        <div class="card"><h3>A scientific experiment platform</h3><p>PICARD brings research questions, datasets, algorithms, controlled configurations, trials, and evidence into one experiment workflow.</p></div>
         <div class="card"><h3>A bridge to distributed computing</h3><p>The platform handles authentication, queueing, Spark execution, status, and result delivery so researchers can focus on the experiment.</p></div>
-        <div class="card"><h3>A continuation, not a finished product</h3><p>Devine’s dissertation identified future work in pipeline scalability, algorithm tuning, additional applications, and streaming. PICARD provides a place for that work to continue.</p></div>
+        <div class="card"><h3>A platform for continued research</h3><p>Devine’s dissertation identified future work in pipeline scalability, algorithm tuning, additional applications, and streaming. PICARD provides a place for that work to continue.</p></div>
       </div>
     </section>
 
     <section id="redesign">
       <h2>Why is there a PICARD2?</h2>
-      <p>The first PICARD implementation proved that a browser could submit research jobs to distributed hardware, but its execution path was difficult to operate and extend. Each experiment crossed a .NET API, an in-process queue, orchestration code, and shell scripts that provisioned a fresh Docker Swarm with Hadoop, HDFS, YARN, and Spark. Failures could leave cluster resources or files in an uncertain state, while local development and deployment depended heavily on server-specific knowledge.</p>
+      <p>The first PICARD implementation proved that a browser could submit research jobs to distributed hardware. Its execution path became difficult to operate and extend. Each experiment crossed a .NET API, an in-process queue, orchestration code, and shell scripts that provisioned a fresh Docker Swarm with Hadoop, HDFS, YARN, and Spark. Failures could leave cluster resources or files in an uncertain state, while local development and deployment depended heavily on server-specific knowledge.</p>
       <p>PICARD2 is an architectural reset around a smaller set of clearer services: a modern React client, Django/DRF API and data model, Celery with Redis for background work, MySQL persistence, and a persistent Spark standalone cluster managed through Docker Compose. The intent is to make the platform easier to understand, test, maintain, and deploy while preserving its distributed-research purpose.</p>
-      <div class="callout"><strong>The mission did not change</strong>PICARD2 changes how the platform is built. It still exists to make Devine’s line of distributed experimentation accessible and reproducible; the current work is reconnecting the cleaner foundation to that scientific purpose.</div>
+      <div class="callout"><strong>A shared research mission</strong>PICARD2 updates the platform architecture while continuing Devine’s line of accessible, reproducible distributed experimentation. The current work reconnects that cleaner foundation to its scientific purpose.</div>
     </section>
 
     <section id="direction">
@@ -68,12 +69,12 @@
       <table>
         <thead><tr><th>Horizon</th><th>Project state</th></tr></thead>
         <tbody>
-          <tr><td>Today</td><td>PICARD2 has a modern web application and a containerized Django, Celery, Redis, MySQL, and Spark foundation. Its central experiment and result paths are not yet dependable, and it does not yet represent scientific experiments richly enough.</td></tr>
+          <tr><td>Today</td><td>PICARD2 has a modern web application and a containerized Django, Celery, Redis, MySQL, and Spark foundation. Its central experiment and result paths remain unreliable, and its data model captures only part of a scientific experiment.</td></tr>
           <tr><td>This semester</td><td>Establish one complete research loop: reliably run a thesis-relevant algorithm, view its configuration and scientific results, and conduct a structured parameter sweep that compares multiple trials.</td></tr>
           <tr><td>Beyond this semester</td><td>Use that foundation to incorporate more of the scientific workflow, improve and evaluate research algorithms, support additional datasets and domains, scale deployment, and eventually explore streaming experiments.</td></tr>
         </tbody>
       </table>
-      <div class="callout"><strong>The guiding idea</strong>PICARD’s near-term direction makes each research experiment easier to define, reproduce, understand, and extend.</div>
+      <div class="callout"><strong>Near-term focus</strong>PICARD’s current direction makes each research experiment easier to define, reproduce, understand, and extend.</div>
     </section>
 
     <section id="next">
@@ -86,6 +87,6 @@
       </div>
     </section>
   </main>
-  <footer class="footer">PICARD Project Onboarding · research foundation → platform → continued discovery · updated 2026-08-17</footer>
+  <footer class="footer">PICARD Project Onboarding · Updated 2026-08-17</footer>
 </body>
 </html>

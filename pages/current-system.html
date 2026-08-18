@@ -36,7 +36,7 @@
       <section id="product">
         <div class="eyebrow">PICARD2 · active implementation</div>
         <h1>Where PICARD is today</h1>
-        <p class="lead">PICARD2 is the current attempt to turn PICARD into a simpler web application around a persistent Spark cluster. It establishes useful technical pieces, but today it behaves more like a prototype job console than a complete scientific experimentation platform.</p>
+        <p class="lead">PICARD2 is the current attempt to turn PICARD into a simpler web application around a persistent Spark cluster. It establishes useful technical pieces and currently behaves as a prototype job console. The complete scientific experimentation workflow is still under development.</p>
         <div class="cards">
           <div class="card"><h3>Sign in</h3><p>Users authenticate with GitHub and must belong to the project organization.</p></div>
           <div class="card"><h3>Manage inputs</h3><p>Users can upload, list, share, and delete CSV datasets and Python or JAR algorithm files.</p></div>
@@ -47,17 +47,17 @@
 
       <section id="redesign">
         <h2>Why PICARD was redesigned</h2>
-        <p>No single architecture-decision record explains the rewrite, so the rationale below is inferred from the two codebases and PICARD1’s operational documentation. The strongest reason is not that every earlier framework was obsolete—PICARD1 used React 18 and .NET 8—but that research execution had become tightly coupled to a complex, failure-prone infrastructure lifecycle.</p>
+        <p>The codebases and PICARD1’s operational documentation provide the available record of the rewrite. They point to operational complexity as its main reason. PICARD1 used current frameworks such as React 18 and .NET 8, while research execution remained tightly coupled to a complex, failure-prone infrastructure lifecycle.</p>
         <table>
           <thead><tr><th>PICARD1 pressure</th><th>PICARD2 response</th></tr></thead>
           <tbody>
             <tr><td>Shell scripts built and deployed a fresh Docker Swarm/Hadoop/HDFS/YARN environment for each experiment, then had to tear it down cleanly.</td><td>Keep one Spark standalone master/worker topology available and submit jobs directly through <code>spark-submit</code>.</td></tr>
             <tr><td>The .NET application used an in-process channel while orchestration and job state crossed API code, background services, shell scripts, containers, and files.</td><td>Give background execution an explicit Celery/Redis boundary and keep web/API persistence in Django and MySQL.</td></tr>
             <tr><td>Development depended on a specific remote server, SSH tunneling, old cluster images, and operational knowledge that was difficult to reproduce.</td><td>Describe the full application as Docker Compose services that can share a consistent local or deployed topology.</td></tr>
-            <tr><td>The frontend accumulated several overlapping UI libraries and legacy flows around the earlier backend.</td><td>Start with a smaller React 19 application and a narrower API surface that can be redesigned around the current research journey.</td></tr>
+            <tr><td>The frontend accumulated several overlapping UI libraries and legacy flows around the earlier backend.</td><td>Start with a smaller React 19 application and a narrower API surface that can be redesigned around the current experiment workflow.</td></tr>
           </tbody>
         </table>
-        <p>The redesign simplifies the intended architecture; it has not automatically solved reliability. Several research concepts and end-to-end contracts were left incomplete during the reset, which is why the current semester focuses on reconnecting PICARD2 to a proven scientific experiment.</p>
+        <p>The redesign simplifies the intended architecture, and reliability work remains. The reset left several research concepts and end-to-end contracts incomplete. This semester focuses on reconnecting PICARD2 to a proven scientific experiment.</p>
       </section>
 
       <section id="architecture">
@@ -73,11 +73,11 @@
         <table>
           <thead><tr><th>Concept</th><th>Current representation</th><th>Important limitation</th></tr></thead>
           <tbody>
-            <tr><td>Dataset</td><td>A named, owned CSV file with public/private visibility.</td><td>The platform does not describe schema, scientific role, version, or compatibility with an algorithm.</td></tr>
-            <tr><td>Algorithm</td><td>A named, owned Python or JAR file with an optional JAR main class.</td><td>There is no versioned execution contract or typed parameter definition.</td></tr>
-            <tr><td>Experiment</td><td>An ID, owner, algorithm, dataset, status, free-form arguments, output/result files, and creation time.</td><td>The record is not a complete reproducible scientific configuration and has no structured metrics.</td></tr>
-            <tr><td>Result</td><td>An intended text artifact plus an output file.</td><td>Logs, result paths, and API behavior disagree, and the portal does not interpret scientific outcomes.</td></tr>
-            <tr><td>Parameter study</td><td>Not represented.</td><td>There is no sweep, trial relationship, comparison, or ranking.</td></tr>
+            <tr><td>Dataset</td><td>A named, owned CSV file with public/private visibility.</td><td>Schema, scientific role, version, and algorithm compatibility are absent.</td></tr>
+            <tr><td>Algorithm</td><td>A named, owned Python or JAR file with an optional JAR main class.</td><td>A versioned execution contract and typed parameter definitions are absent.</td></tr>
+            <tr><td>Experiment</td><td>An ID, owner, algorithm, dataset, status, free-form arguments, output/result files, and creation time.</td><td>The record captures only part of a reproducible scientific configuration and provides no structured metrics.</td></tr>
+            <tr><td>Result</td><td>An intended text artifact plus an output file.</td><td>Logs, result paths, and API behavior disagree, and scientific outcomes remain uninterpreted.</td></tr>
+            <tr><td>Parameter study</td><td>Absent.</td><td>Sweep records, trial relationships, comparison, and ranking are absent.</td></tr>
           </tbody>
         </table>
       </section>
@@ -90,7 +90,7 @@
             <tr><td>Accessible distributed execution</td><td><span class="status partial">Foundation</span> The web, queue, worker, and Spark services exist.</td><td>Prove one representative research algorithm repeatedly from a documented environment.</td></tr>
             <tr><td>Explicit algorithm contract</td><td><span class="status bad">Missing</span> Uploads are generic files and configuration is a raw string.</td><td>Describe inputs, typed parameters, outputs, metrics, and algorithm identity in stable contracts.</td></tr>
             <tr><td>Reproducible experiment</td><td><span class="status bad">Incomplete</span> A run stores references and a status.</td><td>Snapshot the resolved dataset, algorithm version, parameters, lifecycle, and relevant execution context.</td></tr>
-            <tr><td>Scientific evidence</td><td><span class="status bad">Broken</span> Output and result files are intended but not coherent.</td><td>Persist and present understandable metrics, summaries, logs, errors, and artifacts.</td></tr>
+            <tr><td>Scientific evidence</td><td><span class="status bad">Broken</span> Output and result files are inconsistent.</td><td>Persist and present understandable metrics, summaries, logs, errors, and artifacts.</td></tr>
             <tr><td>Controlled parameter studies</td><td><span class="status bad">Missing</span> Runs are submitted one at a time.</td><td>Define ranges, generate trials, monitor them together, and compare outcomes.</td></tr>
             <tr><td>Research growth</td><td><span class="status partial">Possible</span> The stack can host uploaded algorithms.</td><td>Create a dependable experiment boundary before adding more pipeline stages, domains, or streaming.</td></tr>
           </tbody>
@@ -98,17 +98,17 @@
       </section>
 
       <section id="blockers">
-        <h2>Why the central path is not reliable yet</h2>
+        <h2>Why the central path still fails</h2>
         <p>A code-level review found several disagreements across the API, worker, storage, and frontend:</p>
         <ul>
           <li>Experiment UUIDs are routed as integers.</li>
-          <li>Saved argument values are not passed to <code>spark-submit</code>.</li>
+          <li>Saved argument values never reach <code>spark-submit</code>.</li>
           <li>JAR class options are placed in the wrong command position.</li>
           <li>The worker and API expect different result filenames and locations.</li>
-          <li>The experiment-detail response exposes a file field instead of readable log text.</li>
+          <li>The experiment-detail response exposes a file field where the interface expects readable log text.</li>
           <li>Rerun cleanup, artifact ownership, error detail, and server-side validation are incomplete.</li>
         </ul>
-        <p>These are implementation problems rather than defining product behavior.</p>
+        <p>These implementation problems prevent the current product behavior from serving as a dependable experiment model.</p>
       </section>
 
       <section id="durable">
@@ -119,15 +119,15 @@
           <div class="card"><h3>Structured configuration</h3><p>The target experiment model replaces the command-line argument box with typed definitions, defaults, units, constraints, and resolved values.</p></div>
           <div class="card"><h3>Elevate the result</h3><p>Scientific metrics and comparison belong in the primary experience; raw logs and downloadable artifacts are supporting evidence.</p></div>
         </div>
-        <div class="callout warn"><strong>Prototype, not finalized product</strong>The current LCARS interface demonstrates available operations. Its navigation, information hierarchy, terminology, and interaction model remain open as PICARD2 reconnects with the research workflow.</div>
+        <div class="callout warn"><strong>Current interface status</strong>The LCARS interface demonstrates available operations. Its navigation, information hierarchy, terminology, and interaction model remain open as PICARD2 reconnects with the research workflow.</div>
       </section>
 
       <section id="confidence">
         <h2>What has been validated</h2>
-        <div class="callout warn"><strong>Code-level assessment, not runtime certification</strong>The active experiment, frontend, and Compose paths were reviewed on 2026-08-17. A clean full-stack start, GitHub authentication, and the Spark experiment journey were not run end to end during this assessment.</div>
+        <div class="callout warn"><strong>Assessment coverage</strong>The 2026-08-17 review covered the active experiment, frontend, and Compose paths at the code level. Runtime validation remains pending for a clean full-stack start, GitHub authentication, and the complete Spark experiment workflow.</div>
       </section>
     </main>
   </div>
-  <footer class="footer">PICARD Project Onboarding · understand today’s prototype in light of the research purpose</footer>
+  <footer class="footer">PICARD Project Onboarding · PICARD2 Today</footer>
 </body>
 </html>

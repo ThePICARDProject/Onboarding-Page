@@ -36,7 +36,7 @@
       <section id="model">
         <div class="eyebrow">The conceptual shape of PICARD</div>
         <h1>The research experiment model</h1>
-        <p class="lead">PICARD is organized around reproducible research experiments rather than infrastructure commands. Algorithms and datasets provide the inputs; configuration defines the trial; distributed execution performs the work; and results preserve the evidence.</p>
+        <p class="lead">PICARD centers its model on reproducible research experiments. Algorithms and datasets provide the inputs; configuration defines the trial; distributed execution performs the work; and results preserve the evidence.</p>
         <div class="pipeline"><span>Research question</span><b>→</b><span>Algorithm + dataset</span><b>→</b><span>Resolved configuration</span><b>→</b><span>Distributed run</span><b>→</b><span>Scientific result</span><b>→</b><span>Next question</span></div>
       </section>
 
@@ -47,7 +47,7 @@
           <div class="card"><h3>Algorithm author</h3><p>A researcher or developer who prepares a distributed algorithm and describes its compatible inputs, typed parameters, execution entry point, outputs, and metrics.</p></div>
           <div class="card"><h3>Platform operator</h3><p>A maintainer who keeps shared computing resources available, protects capacity, and investigates infrastructure or execution failures.</p></div>
         </div>
-        <p>One person may occupy several roles. The roles describe responsibilities around an experiment rather than separate account types in the current implementation.</p>
+        <p>One person may occupy several roles. These roles describe responsibilities around an experiment and remain separate from the current account model.</p>
       </section>
 
       <section id="vocabulary">
@@ -111,7 +111,7 @@
         <table>
           <thead><tr><th>Area</th><th>Relevant states</th><th>Meaning</th></tr></thead>
           <tbody>
-            <tr><td>Configuration</td><td>Incomplete, invalid, over limit, ready</td><td>The proposed experiment is still being formed and has not entered the execution system.</td></tr>
+            <tr><td>Configuration</td><td>Incomplete, invalid, over limit, ready</td><td>The proposed experiment remains outside the execution system while it is being formed.</td></tr>
             <tr><td>Experiment</td><td>Pending, queued, running, successful, failed, rerunning</td><td>The lifecycle of one resolved run.</td></tr>
             <tr><td>Sweep</td><td>Draft, queued, running, partially failed, completed, stopping, stopped</td><td>The aggregate lifecycle of related trials, including preserved partial work.</td></tr>
             <tr><td>Result</td><td>Not ready, summary ready, artifact ready, missing metric, partial, failed</td><td>The availability and completeness of scientific evidence can differ from execution state.</td></tr>
@@ -131,10 +131,10 @@
           <li>The behavior of already-running work when a sweep stops.</li>
           <li>The first deployment environment, access model, and expected interruption behavior.</li>
         </ul>
-        <p>These boundaries can evolve without changing PICARD’s core identity: a reproducible distributed experimentation platform for continued research.</p>
+        <p>These boundaries can evolve while PICARD keeps its core identity as a reproducible distributed experimentation platform for continued research.</p>
       </section>
     </main>
   </div>
-  <footer class="footer">PICARD Project Onboarding · from research configuration to reproducible evidence</footer>
+  <footer class="footer">PICARD Project Onboarding · Experiment Model</footer>
 </body>
 </html>

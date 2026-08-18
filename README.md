@@ -1,6 +1,6 @@
 # PICARD Project Onboarding Portal
 
-This is the newcomer-facing introduction to PICARD. Open `index.html` directly or serve this directory with any static file server.
+This is an introduction to PICARD. Open `index.html` directly or serve this directory with any static file server.
 
 The portal introduces:
 
@@ -14,17 +14,18 @@ The portal introduces:
 
 The active pages are:
 
-- `index.html` — project introduction;
-- `pages/research.html` — research foundation;
-- `pages/current-system.html` — current PICARD2 product and vision comparison;
-- `pages/roadmap.html` — semester direction and end state; and
-- `pages/getting-started.html` — experiment model.
+- `index.html`: project introduction;
+- `pages/research.html`: research foundation;
+- `pages/current-system.html`: current PICARD2 product and vision comparison;
+- `pages/roadmap.html`: semester direction and end state;
+- `pages/getting-started.html`: experiment model; and
+- `assets/docs/devine-dissertation.pdf`: portal-hosted copy of Devine's dissertation.
 
 The former `migration.html` and `scope.html` routes redirect to the research foundation so existing links continue to work.
 
 ## Source roles
 
-Devine's dissertation is the research foundation, not a screen specification. PICARD2 is the active implementation and current technical constraint, not a finished product. The PICARD1 archive is historical implementation evidence, not a parity checklist. The current scope advances the research purpose without first recreating the entirety of PICARD1.
+Devine's dissertation provides the research foundation. PICARD2 provides the active implementation and current technical constraints. The PICARD1 archive records historical implementation evidence. The current scope advances the research purpose through a focused experiment workflow.
 
 ## Maintenance
 

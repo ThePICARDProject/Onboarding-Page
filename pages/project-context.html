@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Purpose &amp; Concepts · PICARD2 Onboarding</title>
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+  <header class="topnav">
+    <div class="brand">PICARD2 <span>TEAM ONBOARDING</span></div>
+    <nav>
+      <a href="../index.html">Overview</a>
+      <a class="active" href="project-context.html">Purpose &amp; Concepts</a>
+      <a href="current-system.html">Current System</a>
+      <a href="migration.html">Migration</a>
+      <a href="roadmap.html">Roadmap</a>
+      <a href="getting-started.html">Getting Started</a>
+    </nav>
+  </header>
+
+  <div class="page with-sidebar">
+    <aside class="subnav">
+      <div class="label">On this page</div>
+      <ul>
+        <li><a href="#purpose">What PICARD is</a></li>
+        <li><a href="#origin">Where it came from</a></li>
+        <li><a href="#experiment">A PICARD experiment</a></li>
+        <li><a href="#concepts">Key ideas</a></li>
+        <li><a href="#design">Why designers should care</a></li>
+        <li><a href="#sources">Sources and further reading</a></li>
+      </ul>
+    </aside>
+
+    <main>
+      <section id="purpose">
+        <div class="eyebrow">Project and research context</div>
+        <h1>Why PICARD exists</h1>
+        <p class="lead">PICARD—the Platform for Integrated Computation and Analysis of Research Data—is a research experimentation platform for researchers and students. Its target workflow brings a dataset, an algorithm, and a configuration together; coordinates a run on distributed computing resources; and returns the records and results needed to inspect, repeat, and compare the work. The mission is to remove the burden of administering that infrastructure so users can focus on their research questions. PICARD is both a research instrument and a long-running WVU educational project where student teams learn to design, build, secure, document, and maintain research software.</p>
+        <div class="callout warn"><strong>Project purpose versus current state</strong>This page describes the enduring purpose of PICARD and the target researcher experience. PICARD2 is the active implementation, but its central run path is still being stabilized. Consult <a href="current-system.html">Current System</a> for verified status and limitations.</div>
+      </section>
+
+      <section id="origin">
+        <h2>Where it came from</h2>
+        <p>PICARD grew from Dr. Thomas Devine's dissertation research and an algorithm called CoDRIFt. That work addressed an unusually difficult search: finding rare pulsar signals in enormous radio-astronomy datasets when labeled examples were scarce. CoDRIFt combined semi-supervised learning, random forests, and computation distributed across multiple machines. PICARD generalizes the operational lesson behind that work. Instead of building a special cluster workflow for one algorithm and one scientific domain, a researcher should be able to bring a supported algorithm and dataset to a reusable experiment platform. CoDRIFt explains the project's roots; it does not limit which research questions PICARD may support.</p>
+      </section>
+
+      <section id="experiment">
+        <h2>A PICARD experiment</h2>
+        <div class="pipeline" aria-label="The intended PICARD experiment workflow">
+          <span>Dataset + algorithm + configuration</span><b aria-hidden="true">→</b><span>Queued run</span><b aria-hidden="true">→</b><span>Distributed execution</span><b aria-hidden="true">→</b><span>Logs + results</span><b aria-hidden="true">→</b><span>Repeat or compare</span>
+        </div>
+        <p>An <strong>experiment</strong> is the research question and planned comparison. A <strong>run</strong> is one execution with one resolved set of inputs, parameters, resources, and environment conditions. A <strong>result</strong> is useful evidence only when it can be traced back to that run. This distinction is why PICARD's roadmap calls for immutable run snapshots and structured results: a filename or final score without its provenance cannot support reliable comparison or later reproduction.</p>
+      </section>
+
+      <section id="concepts">
+        <h2>Key ideas around PICARD</h2>
+        <p>Designers do not need to become machine-learning specialists, but these concepts explain why apparently small interface and data decisions carry scientific weight.</p>
+        <div class="cards">
+          <div class="card">
+            <h3>Semi-supervised learning and co-training</h3>
+            <p>Semi-supervised learning combines a small amount of labeled data with a larger amount of unlabeled data. Co-training is one approach in which complementary views or learners help label more examples. Scarce-label workflows are part of PICARD's scientific history through CoDRIFt; PICARD itself is the experiment platform, not the learning method.</p>
+          </div>
+          <div class="card">
+            <h3>Class imbalance and rare events</h3>
+            <p>A dataset is imbalanced when the examples of interest are much rarer than ordinary examples, so overall accuracy may hide poor detection of the minority class. The pulsar problem behind CoDRIFt is one example. PICARD should support careful comparison of parameters and meaningful metrics instead of presenting one headline score as the whole result.</p>
+          </div>
+          <div class="card">
+            <h3>Distributed computing</h3>
+            <p>Distributed computing divides data or work among coordinated machines or worker processes. It makes experiments on large datasets practical, but introduces queueing, resource, environment, and failure concerns. PICARD's value is coordinating that complexity behind a legible researcher workflow while still showing useful progress, status, logs, and failures.</p>
+          </div>
+          <div class="card">
+            <h3>Parameters and sweeps</h3>
+            <p>Hyperparameters are choices made before a run—such as tree count or learning rate—that can change its outcome. A parameter sweep executes a planned set of configurations for comparison. PICARD therefore needs typed parameters, bounded work, visible trial counts, cancellation, and results tied to each exact configuration.</p>
+          </div>
+          <div class="card">
+            <h3>Reproducibility and variation</h3>
+            <p>A reproducible experiment preserves enough information for another run to be repeated and interpreted under equivalent conditions. Code, data, parameters, dependencies, software, and hardware can affect results. For PICARD, configuration history, version identity, environment records, logs, and structured results all contribute to scientific trust.</p>
+          </div>
+          <div class="card">
+            <h3>Data leakage</h3>
+            <p>Data leakage occurs when training or model selection uses information that would not legitimately be available, producing overly optimistic results. PICARD cannot guarantee sound research methodology, but its interface can make dataset roles, configuration, provenance, and recorded metrics explicit instead of hiding choices that reviewers need to inspect.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="design">
+        <h2>Why designers should care</h2>
+        <div class="callout"><strong>The interface participates in research quality</strong>PICARD does more than launch computation. Its design determines whether users can understand what ran, recognize problems, compare outcomes, and explain a result later.</div>
+        <ul>
+          <li><strong>Preserve provenance:</strong> show which dataset, algorithm version, parameters, and environment produced a result.</li>
+          <li><strong>Make states legible:</strong> queued, running, failed, cancelled, and completed are meaningful experiment states, not incidental labels.</li>
+          <li><strong>Support comparison:</strong> runs and future sweep trials need scannable configurations, metrics, and grouping.</li>
+          <li><strong>Prevent costly mistakes:</strong> show validation, expected trial counts, resource implications, and destructive consequences before submission.</li>
+          <li><strong>Communicate limits honestly:</strong> PICARD coordinates computation; it does not certify a model, prevent every methodological error, or create reproducibility by itself.</li>
+        </ul>
+      </section>
+
+      <section id="sources">
+        <h2>Sources and further reading</h2>
+        <p>The internal <cite>PICARD: Design of Algorithms</cite> A1 and A2 documents supplied the project framing for this page. These foundational sources provide the underlying research context:</p>
+        <ul>
+          <li><a href="https://researchrepository.wvu.edu/etd/7727/" target="_blank" rel="noopener noreferrer">Thomas R. Devine, <cite>Searching for Needles in the Cosmic Haystack</cite></a></li>
+          <li><a href="https://publications.ri.cmu.edu/combining-labeled-and-unlabeled-data-with-co-training" target="_blank" rel="noopener noreferrer">Avrim Blum and Tom Mitchell, “Combining Labeled and Unlabeled Data with Co-Training”</a></li>
+          <li><a href="https://www.stat.berkeley.edu/~breiman/RandomForests/cc_papers.htm" target="_blank" rel="noopener noreferrer">Chao Chen, Andy Liaw, and Leo Breiman, “Using Random Forest to Learn Imbalanced Data”</a></li>
+          <li><a href="https://www.usenix.org/conference/hotcloud-10/spark-cluster-computing-working-sets" target="_blank" rel="noopener noreferrer">Matei Zaharia et al., “Spark: Cluster Computing with Working Sets”</a></li>
+          <li><a href="https://doi.org/10.1016/j.future.2021.06.014" target="_blank" rel="noopener noreferrer">Odd Erik Gundersen, Saeid Shamsaliei, and Richard Juul Isdahl, “Do machine learning platforms provide out-of-the-box reproducibility?”</a></li>
+          <li><a href="https://doi.org/10.1016/j.patter.2023.100804" target="_blank" rel="noopener noreferrer">Sayash Kapoor and Arvind Narayanan, “Leakage and the reproducibility crisis in machine-learning-based science”</a></li>
+        </ul>
+      </section>
+    </main>
+  </div>
+
+  <footer class="footer">PICARD2 Onboarding · understand the research purpose before the stack</footer>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Check PICARD2 availability and prepare WVU gateway and PICARD machine access.">
+  <title>Getting Started · PICARD Onboarding</title>
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+  <header class="topnav">
+    <div class="brand">PICARD <span>PROJECT ONBOARDING</span></div>
+    <nav>
+      <a href="../index.html">Overview</a>
+      <a href="research.html">Research Foundation</a>
+      <a href="current-system.html">PICARD2 Today</a>
+      <a href="roadmap.html">Near-Term Horizon</a>
+      <a href="getting-started.html">Experiment Model</a>
+      <a class="active" href="setup.html">Getting Started</a>
+    </nav>
+  </header>
+
+  <div class="page with-sidebar">
+    <aside class="subnav">
+      <div class="label">On this page</div>
+      <ul>
+        <li><a href="#before">Before you begin</a></li>
+        <li><a href="#gateway">Request gateway access</a></li>
+        <li><a href="#connect">Connect to PICARD</a></li>
+        <li><a href="#shortcut">Optional SSH shortcut</a></li>
+        <li><a href="#complete">Confirm your setup</a></li>
+      </ul>
+    </aside>
+
+    <main>
+      <section id="before">
+        <div class="eyebrow">New member setup · project access</div>
+        <h1>Getting started with PICARD</h1>
+        <div class="callout warn"><strong>PICARD2 is not currently available on the project machine</strong>Beginning-of-semester setup and bug fixes are required before the application will be running and accessible. The design team will need to hang tight while that work is completed; we will let you know when PICARD2 is ready to use. In the meantime, browse the <a href="research.html">research documentation and background history</a>, review <a href="current-system.html">PICARD2’s current design</a>, and learn about the planned <a href="getting-started.html">experiment model</a>.</div>
+        <p class="lead">The PICARD project uses a remote WVU machine. Reaching it requires two SSH connections: first to WVU’s gateway, then from that gateway to the PICARD host.</p>
+        <div class="pipeline" aria-label="Connection path from your computer to the PICARD machine">
+          <span>Your macOS or WSL terminal</span><b aria-hidden="true">→</b><span>WVU SSH gateway</span><b aria-hidden="true">→</b><span>PICARD machine</span>
+        </div>
+        <div class="callout warn"><strong>Two approvals are required</strong>Gateway access and a PICARD machine account are separate. WVU must grant gateway access, and Dr. Devine or another PICARD team member must create your account on the PICARD machine.</div>
+        <p>These instructions use a terminal in macOS or Windows Subsystem for Linux (WSL). Replace every placeholder in angle brackets with your own account information before running a command.</p>
+      </section>
+
+      <section id="gateway">
+        <h2>1. Request WVU gateway access</h2>
+        <ol class="steps">
+          <li>Open the <a href="https://wvu.atlassian.net/servicedesk/customer/portal/5/create/638?src=182487431" target="_blank" rel="noopener">WVU SSH Gateway access form ↗</a>.</li>
+          <li>Use <code>157.182.194.132</code> as the destination IP address when completing the request.</li>
+          <li>Wait until WVU confirms that your access has been granted.</li>
+          <li>From your macOS or WSL terminal, verify the gateway connection with your school username:</li>
+        </ol>
+        <pre><code>ssh &lt;your-school-username&gt;@ssh.wvu.edu</code></pre>
+        <p>A successful login leaves you at a shell prompt on the WVU gateway. Keep this SSH session open for the next step.</p>
+      </section>
+
+      <section id="connect">
+        <h2>2. Connect from the gateway to PICARD</h2>
+        <ol class="steps">
+          <li>Ask Dr. Devine or another PICARD team member to create your account on the PICARD machine if you do not already have one.</li>
+          <li>From the gateway session you opened above, connect to the PICARD host:</li>
+        </ol>
+        <pre><code>ssh &lt;your-picard-username&gt;@picard.csee.wvu.edu</code></pre>
+        <div class="callout"><strong>Success check</strong>If the command logs you in and shows a shell prompt on the PICARD machine, your required access is set up. You can stop here or configure the optional shortcut below.</div>
+      </section>
+
+      <section id="shortcut">
+        <h2>3. Optional: configure an SSH shortcut</h2>
+        <p>An SSH configuration lets your computer use the WVU gateway as a jump host automatically.</p>
+        <ol class="steps">
+          <li>On your computer, go to <code>~/.ssh/</code>. Create the file <code>config</code> if it does not exist, then open it in an editor. For example:</li>
+        </ol>
+        <pre><code>cd ~/.ssh
+vim config</code></pre>
+        <p>If Vim is unfamiliar, see this <a href="https://www.freecodecamp.org/news/vim-beginners-guide/" target="_blank" rel="noopener">basic Vim guide ↗</a>.</p>
+        <ol class="steps" start="2">
+          <li>Add the following configuration. Replace both username placeholders; if your PICARD username differs from your school username, use the correct value in each host block.</li>
+        </ol>
+        <pre><code>Host gateway
+    HostName ssh.wvu.edu
+    Port 22
+    User &lt;your-school-username&gt;
+    IdentityFile ~/.ssh/id_rsa
+
+Host picard
+    HostName picard.csee.wvu.edu
+    User &lt;your-picard-username&gt;
+    Port 22
+    IdentityFile ~/.ssh/id_rsa
+    ProxyJump gateway</code></pre>
+        <ol class="steps" start="3">
+          <li>Check the contents of <code>~/.ssh/</code>. If <code>id_rsa</code> does not exist, generate the key pair:</li>
+        </ol>
+        <pre><code>ssh-keygen -t rsa</code></pre>
+        <ol class="steps" start="4">
+          <li>Copy your public key to PICARD. Enter your password or passwords when prompted; the same password may be requested several times.</li>
+        </ol>
+        <pre><code>ssh-copy-id picard</code></pre>
+        <ol class="steps" start="5">
+          <li>Use the new host shortcut to connect:</li>
+        </ol>
+        <pre><code>ssh picard</code></pre>
+        <p>You may still enter your gateway password once. SSH then jumps through the gateway and logs in to PICARD using your identity.</p>
+      </section>
+
+      <section id="complete">
+        <h2>Confirm your setup</h2>
+        <div class="cards">
+          <div class="card"><h3>Required access</h3><p><code>ssh &lt;username&gt;@ssh.wvu.edu</code> reaches the WVU gateway, and a second SSH command from there reaches <code>picard.csee.wvu.edu</code>.</p></div>
+          <div class="card"><h3>Optional shortcut</h3><p><code>ssh picard</code> reaches the PICARD machine through the gateway.</p></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer class="footer">PICARD Project Onboarding · Getting Started</footer>
+</body>
+</html>

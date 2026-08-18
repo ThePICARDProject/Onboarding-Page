@@ -9,8 +9,9 @@ The portal introduces:
 - Devine's scientific workflow, major algorithmic contributions, experimental method, and future research directions;
 - why PICARD2 replaces PICARD1's tightly coupled per-experiment cluster orchestration with a smaller persistent-service architecture;
 - what PICARD2 offers today and how it compares with that research vision;
-- the focused semester destination: one reliable thesis-relevant experiment, understandable scientific results, and structured parameter sweeps; and
-- the participant roles, vocabulary, lifecycle, result structure, and parameter-study model that describe PICARD's anticipated product state.
+- the focused semester destination: one reliable thesis-relevant experiment, understandable scientific results, and structured parameter sweeps;
+- the participant roles, vocabulary, lifecycle, result structure, and parameter-study model that describe PICARD's anticipated product state; and
+- PICARD2's current availability and the WVU gateway and SSH setup required to access the project machine.
 
 The active pages are:
 
@@ -18,7 +19,8 @@ The active pages are:
 - `pages/research.html`: research foundation;
 - `pages/current-system.html`: current PICARD2 product and vision comparison;
 - `pages/roadmap.html`: semester direction and end state;
-- `pages/getting-started.html`: experiment model; and
+- `pages/getting-started.html`: experiment model;
+- `pages/setup.html`: current availability and WVU gateway and PICARD machine access; and
 - `assets/docs/devine-dissertation.pdf`: portal-hosted copy of Devine's dissertation.
 
 The former `migration.html` and `scope.html` routes redirect to the research foundation so existing links continue to work.

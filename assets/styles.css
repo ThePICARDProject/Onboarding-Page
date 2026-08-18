@@ -49,6 +49,7 @@ pre code { padding: 0; border: 0; }
 
 .page { max-width: 1120px; margin: auto; padding: 2.5rem 2rem 5rem; }
 .with-sidebar { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 3rem; }
+.with-sidebar > main { min-width: 0; }
 .subnav { position: sticky; top: 85px; align-self: start; }
 .subnav .label { margin: 0 0 .5rem .6rem; color: var(--muted); font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; }
 .subnav ul { margin: 0 0 1.3rem; padding: 0; list-style: none; }

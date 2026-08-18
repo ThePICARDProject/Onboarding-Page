@@ -1,19 +1,140 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Getting Started · PICARD2 Onboarding</title><link rel="stylesheet" href="../assets/styles.css"></head>
-<body><header class="topnav"><div class="brand">PICARD2 <span>TEAM ONBOARDING</span></div><nav><a href="../index.html">Overview</a><a href="current-system.html">Current System</a><a href="migration.html">Migration</a><a href="roadmap.html">Roadmap</a><a class="active" href="getting-started.html">Getting Started</a></nav></header>
-<div class="page with-sidebar"><aside class="subnav"><div class="label">On this page</div><ul><li><a href="#map">Repository map</a></li><li><a href="#read">Reading order</a></li><li><a href="#baseline">Runtime baseline</a></li><li><a href="#first-work">First contribution</a></li><li><a href="#principles">Working principles</a></li></ul></aside><main>
-<section id="map"><div class="eyebrow">Start here</div><h1>Getting started</h1><p class="lead">Learn the active codebase and its known uncertainty before changing behavior. The old SSH tunnel and .NET startup instructions belong to PICARD1 and are archived.</p><pre><code>PICARD/
-├── picard_new_generation/
-│   ├── PICARD2/                 active implementation
-│   │   ├── frontend/            React 19 + Vite
-│   │   ├── backend/             Django / DRF + Celery
-│   │   ├── spark-cluster/       Spark 3.5 image
-│   │   └── docker-compose.yml   seven-service local topology
-│   └── docs/                    context, guide, assessment, logs
-├── PICARD1/                     legacy behavior reference
-└── Onboarding-Page/             this portal</code></pre></section>
-<section id="read"><h2>Recommended reading order</h2><ol class="steps"><li>Read this portal's <a href="current-system.html">Current System</a>, <a href="migration.html">Migration</a>, and <a href="roadmap.html">Roadmap</a> pages.</li><li>Read <code>docs/project-context.md</code>, <code>docs/migration-assessment.md</code>, and <code>docs/codebase-guide.md</code>.</li><li>Inspect <code>PICARD2/docker-compose.yml</code> for services, ports, dependencies, and volumes.</li><li>Read Django settings/URLs, then dataset, script, and experiment models/views.</li><li>Read <code>experiments/tasks.py</code> for the execution lifecycle.</li><li>Read frontend <code>lib/api.js</code>, workspace/auth providers, then Submit and Experiments pages.</li><li>Consult the matching PICARD1 models/controllers only when analyzing a missing capability.</li></ol></section>
-<section id="baseline"><h2>Runtime baseline: work still required</h2><div class="callout warn"><strong>Setup is not yet reproducible</strong>The repository has no checked-in safe <code>.env.example</code>, dependencies are not pinned, and a clean full-stack smoke test has not been recorded. Treat the steps below as the baseline task, not a promise that startup will succeed.</div><ol class="steps"><li>Document supported Docker, Compose, Node, and Python versions.</li><li>Create a safe <code>PICARD2/backend/.env</code> from an approved example. It must supply Django/MySQL values and local GitHub OAuth credentials; never commit secrets.</li><li>From <code>picard_new_generation/PICARD2</code>, validate configuration with <code>docker compose config</code>.</li><li>Build and start the stack with <code>docker compose up --build</code>. Expected services are frontend, backend, db, redis, celery worker, Spark master, and Spark worker.</li><li>Record migrations, container health, startup failures, and auth prerequisites. Verify the frontend on port 3000, API on 5000, and Spark UIs on 8080/8081 as configured.</li><li>Prove the smallest authenticated asset workflow before attempting Spark execution.</li><li>Add the commands and fixes to a runbook and automate a smoke test.</li></ol></section>
-<section id="first-work"><h2>A good first contribution</h2><div class="cards"><div class="card"><h3>Scope/evidence</h3><p>Locate sweep artifacts or sample algorithms and connect a capability to concrete legacy evidence and an acceptance criterion.</p></div><div class="card"><h3>Reproducibility</h3><p>Add environment documentation, health checks, test scaffolding, or a clean-start smoke script.</p></div><div class="card"><h3>Characterization tests</h3><p>Cover session behavior, ownership/public visibility, uploads, UUID routes, creation authorization, logs, results, reruns, and deletion.</p></div><div class="card"><h3>Vertical-slice repair</h3><p>Fix one contract only after documenting its intended behavior, then test it across every affected layer.</p></div></div><p>The first technical priority is UUID route coverage, followed by an explicit execution/artifact protocol and the Python single-run path.</p></section>
-<section id="principles"><h2>Working principles</h2><ul><li>Preserve the PICARD2 architecture where it is sound; port behavior, not old framework structure.</li><li>Separate product uncertainty from runtime defects and record both explicitly.</li><li>Do not call a feature migrated until its end-to-end path is tested.</li><li>Stabilize one single run before adding orchestration.</li><li>Use typed configuration and structured results as the boundary for future sweeps.</li><li>Keep docs, capability status, API contracts, and decisions current as part of implementation.</li></ul></section>
-</main></div><footer class="footer">PICARD2 Onboarding · build shared understanding before building features</footer></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="PICARD's research experiment model, participant roles, lifecycle, result structure, and parameter studies.">
+  <title>Experiment Model · PICARD Onboarding</title>
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+  <header class="topnav">
+    <div class="brand">PICARD <span>PROJECT ONBOARDING</span></div>
+    <nav>
+      <a href="../index.html">Overview</a>
+      <a href="research.html">Research Foundation</a>
+      <a href="current-system.html">PICARD2 Today</a>
+      <a href="roadmap.html">Near-Term Horizon</a>
+      <a class="active" href="getting-started.html">Experiment Model</a>
+    </nav>
+  </header>
+  <div class="page with-sidebar">
+    <aside class="subnav">
+      <div class="label">On this page</div>
+      <ul>
+        <li><a href="#model">Model overview</a></li>
+        <li><a href="#participants">Participants</a></li>
+        <li><a href="#vocabulary">Core concepts</a></li>
+        <li><a href="#experiment">Single experiment</a></li>
+        <li><a href="#sweep">Parameter study</a></li>
+        <li><a href="#result">Result structure</a></li>
+        <li><a href="#lifecycle">Lifecycle</a></li>
+        <li><a href="#open">Open boundaries</a></li>
+      </ul>
+    </aside>
+    <main>
+      <section id="model">
+        <div class="eyebrow">The conceptual shape of PICARD</div>
+        <h1>The research experiment model</h1>
+        <p class="lead">PICARD is organized around reproducible research experiments rather than infrastructure commands. Algorithms and datasets provide the inputs; configuration defines the trial; distributed execution performs the work; and results preserve the evidence.</p>
+        <div class="pipeline"><span>Research question</span><b>→</b><span>Algorithm + dataset</span><b>→</b><span>Resolved configuration</span><b>→</b><span>Distributed run</span><b>→</b><span>Scientific result</span><b>→</b><span>Next question</span></div>
+      </section>
+
+      <section id="participants">
+        <h2>People around a PICARD experiment</h2>
+        <div class="cards">
+          <div class="card"><h3>Researcher</h3><p>A student, faculty member, or collaborator who brings the scientific question, chooses the experimental inputs, interprets results, and decides what to investigate next.</p></div>
+          <div class="card"><h3>Algorithm author</h3><p>A researcher or developer who prepares a distributed algorithm and describes its compatible inputs, typed parameters, execution entry point, outputs, and metrics.</p></div>
+          <div class="card"><h3>Platform operator</h3><p>A maintainer who keeps shared computing resources available, protects capacity, and investigates infrastructure or execution failures.</p></div>
+        </div>
+        <p>One person may occupy several roles. The roles describe responsibilities around an experiment rather than separate account types in the current implementation.</p>
+      </section>
+
+      <section id="vocabulary">
+        <h2>Core concepts</h2>
+        <table>
+          <thead><tr><th>Concept</th><th>Meaning in PICARD</th></tr></thead>
+          <tbody>
+            <tr><td>Algorithm</td><td>A versioned research method with a documented input contract, ordered typed parameters, an execution entry point, and a result contract.</td></tr>
+            <tr><td>Dataset</td><td>A versioned research input with identity and enough metadata to establish compatibility and reproduce an experiment.</td></tr>
+            <tr><td>Experiment</td><td>One immutable, resolved combination of algorithm, dataset, parameter values, and relevant execution context.</td></tr>
+            <tr><td>Parameter</td><td>A named, typed, constrained algorithm setting. It has one resolved value in an experiment and may contribute multiple values to a sweep.</td></tr>
+            <tr><td>Sweep</td><td>A parameter study containing a finite set of related experiment trials generated from one search-space definition.</td></tr>
+            <tr><td>Trial</td><td>An ordinary experiment belonging to a sweep, with one fully resolved parameter combination and its own lifecycle and result.</td></tr>
+            <tr><td>Result</td><td>The evidence produced by a run: scientific metrics and summary, execution measurements, provenance, diagnostics, and artifacts.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="experiment">
+        <h2>One experiment</h2>
+        <p>A single experiment follows one continuous lifecycle:</p>
+        <ol class="steps">
+          <li>An algorithm and compatible dataset establish the experiment’s inputs.</li>
+          <li>The algorithm contract supplies typed parameters, defaults, constraints, and explanatory metadata.</li>
+          <li>Resolved parameter values and input identities form an immutable experiment configuration.</li>
+          <li>PICARD persists and queues the experiment before Spark execution begins.</li>
+          <li>Status, timing, logs, and errors accumulate while the experiment runs.</li>
+          <li>Successful execution produces scientific metrics, a summary, and one or more result artifacts.</li>
+          <li>The complete record remains available for interpretation, comparison, and reproduction.</li>
+        </ol>
+      </section>
+
+      <section id="sweep">
+        <h2>A parameter study</h2>
+        <p>A sweep extends the single-experiment model. Selected parameters contain finite ranges or value lists while the remaining parameters stay fixed. PICARD expands the Cartesian combinations into ordinary child experiments.</p>
+        <div class="pipeline"><span>Define search space</span><b>→</b><span>Count combinations</span><b>→</b><span>Create trials</span><b>→</b><span>Run within capacity</span><b>→</b><span>Aggregate progress</span><b>→</b><span>Compare results</span></div>
+        <div class="cards">
+          <div class="card"><h3>Bounded definition</h3><p>The search space is finite and validated, with an exact trial count and a configured safety limit.</p></div>
+          <div class="card"><h3>Atomic record</h3><p>The sweep definition and child configurations exist before execution starts, independent of an open browser session.</p></div>
+          <div class="card"><h3>Ordinary trials</h3><p>Every child uses the same experiment lifecycle, result contract, authorization, and execution path as a standalone run.</p></div>
+          <div class="card"><h3>Collective outcome</h3><p>Aggregate progress, partial failure, preserved completed work, and metric comparison describe the study as a whole.</p></div>
+        </div>
+      </section>
+
+      <section id="result">
+        <h2>What a result contains</h2>
+        <table>
+          <thead><tr><th>Result layer</th><th>Contents</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>Scientific outcome</td><td>Primary objective, class-aware metrics, summary values, and domain-specific interpretation data.</td><td>Answers what the experiment learned or produced.</td></tr>
+            <tr><td>Execution evidence</td><td>Final state, timestamps, duration, and relevant performance measurements.</td><td>Shows whether the method ran successfully and efficiently.</td></tr>
+            <tr><td>Provenance</td><td>Dataset identity, algorithm version, resolved parameters, and relevant environment identity.</td><td>Connects the outcome to the conditions that produced it.</td></tr>
+            <tr><td>Diagnostics</td><td>Logs, warnings, errors, and failure context.</td><td>Explains incomplete or unexpected behavior.</td></tr>
+            <tr><td>Artifacts</td><td>Generated files, models, predictions, tables, or other algorithm-defined outputs.</td><td>Preserves the detailed evidence for later analysis.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="lifecycle">
+        <h2>Lifecycle and uncertainty</h2>
+        <table>
+          <thead><tr><th>Area</th><th>Relevant states</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td>Configuration</td><td>Incomplete, invalid, over limit, ready</td><td>The proposed experiment is still being formed and has not entered the execution system.</td></tr>
+            <tr><td>Experiment</td><td>Pending, queued, running, successful, failed, rerunning</td><td>The lifecycle of one resolved run.</td></tr>
+            <tr><td>Sweep</td><td>Draft, queued, running, partially failed, completed, stopping, stopped</td><td>The aggregate lifecycle of related trials, including preserved partial work.</td></tr>
+            <tr><td>Result</td><td>Not ready, summary ready, artifact ready, missing metric, partial, failed</td><td>The availability and completeness of scientific evidence can differ from execution state.</td></tr>
+            <tr><td>Platform</td><td>Available, degraded, disconnected, worker unavailable, stale status</td><td>Infrastructure health remains distinct from the outcome of an experiment.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="open">
+        <h2>Open product boundaries</h2>
+        <p>The near-term direction defines a complete experiment loop while leaving several details dependent on the representative research workload:</p>
+        <ul>
+          <li>The first thesis-relevant algorithm and representative dataset.</li>
+          <li>The exact parameter types, units, constraints, and supported range forms.</li>
+          <li>The scientific summary, metrics, artifacts, and comparison semantics for that algorithm.</li>
+          <li>The safe sweep size, execution capacity, and meaningful forms of progress.</li>
+          <li>The behavior of already-running work when a sweep stops.</li>
+          <li>The first deployment environment, access model, and expected interruption behavior.</li>
+        </ul>
+        <p>These boundaries can evolve without changing PICARD’s core identity: a reproducible distributed experimentation platform for continued research.</p>
+      </section>
+    </main>
+  </div>
+  <footer class="footer">PICARD Project Onboarding · from research configuration to reproducible evidence</footer>
+</body>
+</html>

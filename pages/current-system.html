@@ -1,38 +1,133 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Current System · PICARD2 Onboarding</title><link rel="stylesheet" href="../assets/styles.css"></head>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="The current PICARD2 product, architecture, capabilities, and gaps against PICARD's research purpose.">
+  <title>PICARD2 Today · PICARD Onboarding</title>
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
 <body>
-<header class="topnav"><div class="brand">PICARD2 <span>TEAM ONBOARDING</span></div><nav><a href="../index.html">Overview</a><a class="active" href="current-system.html">Current System</a><a href="migration.html">Migration</a><a href="roadmap.html">Roadmap</a><a href="getting-started.html">Getting Started</a></nav></header>
-<div class="page with-sidebar">
-  <aside class="subnav"><div class="label">On this page</div><ul><li><a href="#architecture">Architecture</a></li><li><a href="#model">Domain model</a></li><li><a href="#flows">User flows</a></li><li><a href="#status">Implementation status</a></li><li><a href="#defects">Confirmed defects</a></li><li><a href="#confidence">Confidence level</a></li></ul></aside>
-  <main>
-    <section id="architecture"><div class="eyebrow">PICARD2 · active codebase</div><h1>Current system</h1><p class="lead">PICARD2 is a rewrite, not a framework-for-framework port. It has better service boundaries and useful new behavior, but static presence does not prove an end-to-end workflow.</p>
-      <div class="pipeline"><span>React 19 SPA</span><b>→ session + CSRF →</b><span>Django / DRF</span><b>→</b><span>MySQL + media</span></div>
-      <div class="pipeline"><span>Django / DRF</span><b>→</b><span>Redis</span><b>→</b><span>Celery worker (concurrency 1)</span><b>→ spark-submit →</b><span>Spark master</span><b>→</b><span>Spark worker</span></div>
-      <p>The local topology is defined in <code>PICARD2/docker-compose.yml</code>. Uploaded files live in Django media storage; Spark inputs and outputs also cross shared Docker volumes.</p>
-    </section>
-    <section id="model"><h2>Current domain model</h2><table><thead><tr><th>Entity</th><th>What PICARD2 stores</th><th>Important limitation</th></tr></thead><tbody>
-      <tr><td>User</td><td>Django user plus GitHub session profile</td><td>GitHub OAuth requires membership in <code>ThePICARDProject</code>.</td></tr>
-      <tr><td>CSVDataset</td><td>UUID, owner, name, visibility, CSV file, upload time</td><td>No description, detail/download API, or chunked upload.</td></tr>
-      <tr><td>Script</td><td>UUID, owner, Python/JAR file, visibility, optional JAR main class</td><td>No versioned algorithm definition or typed parameters.</td></tr>
-      <tr><td>SparkExperiment</td><td>UUID, owner, script, optional dataset, status, free-form args, output/result files, created time</td><td>No name, configuration snapshot, structured results, full lifecycle, or cancellation.</td></tr>
-    </tbody></table></section>
-    <section id="flows"><h2>Intended user flows</h2><div class="cards">
-      <div class="card"><h3>Authentication</h3><p>GitHub OAuth, organization gate, cookie-backed Django session, and CSRF token. Password endpoints exist but are not exposed in the current UI.</p></div>
-      <div class="card"><h3>Asset management</h3><p>Upload, list, share privately/publicly, and delete CSV datasets and Python/JAR scripts through the workspace provider.</p></div>
-      <div class="card"><h3>Experiment execution</h3><p>Create a pending experiment, queue it through Celery, invoke <code>spark-submit</code>, and poll summaries every 12 seconds.</p></div>
-      <div class="card"><h3>Results</h3><p>The application should write to a supplied result path and Celery should import the artifact. The current contracts disagree, so this is not coherent yet.</p></div>
-    </div></section>
-    <section id="status"><h2>Status by area</h2><table><thead><tr><th>Area</th><th>Status</th><th>Current assessment</th></tr></thead><tbody>
-      <tr><td>Architecture foundation</td><td><span class="status good">Present</span></td><td>React, Django/DRF, MySQL, Redis/Celery, and Spark standalone are wired in Compose.</td></tr>
-      <tr><td>Authentication</td><td><span class="status partial">Retest</span></td><td>GitHub organization-gated session flow is implemented; runtime configuration and end-to-end behavior need documentation and tests.</td></tr>
-      <tr><td>Assets</td><td><span class="status partial">Partial</span></td><td>Basic CRUD and sharing exist; metadata, robust server validation, download/edit/versioning, and large uploads are unresolved.</td></tr>
-      <tr><td>Single experiment</td><td><span class="status bad">Broken</span></td><td>The main contracts contain multiple confirmed defects. Do not build sweeps on this path.</td></tr>
-      <tr><td>Results and operations</td><td><span class="status bad">Incomplete</span></td><td>Result discovery/storage disagree; cancellation, structured results, aggregation, export, and visualization are absent.</td></tr>
-      <tr><td>Automated verification</td><td><span class="status bad">Missing</span></td><td>No meaningful test suite was found. Runtime characterization is still required.</td></tr>
-    </tbody></table></section>
-    <section id="defects"><h2>Confirmed high-priority defects</h2><ol class="steps">
-      <li>UUID primary keys are routed through integer URL converters.</li><li>The worker and API use incompatible result filenames and locations.</li><li>Experiment detail returns a file field instead of reading log text.</li><li>Stored experiment arguments are never passed to <code>spark-submit</code>.</li><li>JAR <code>--class</code> options are placed after the application resource.</li><li>Result ownership is split across Django storage and a shared Spark volume.</li><li>Rerun cleanup and referenced-asset deletion semantics are unsafe or ambiguous.</li><li>Important upload checks exist only in the browser.</li><li>The Python/JAR invocation and output contract is undocumented.</li>
-    </ol></section>
-    <section id="confidence"><h2>What has been validated</h2><div class="callout warn"><strong>Static assessment, not a runtime certification</strong>Python source compilation passed on 2026-07-16. The frontend build could not start because dependencies were not installed. The full Docker stack, authentication flow, and Spark experiment path have not yet been proven from a clean environment.</div></section>
-  </main>
-</div><footer class="footer">PICARD2 Onboarding · current system · assessed 2026-07-16</footer></body></html>
+  <header class="topnav">
+    <div class="brand">PICARD <span>PROJECT ONBOARDING</span></div>
+    <nav>
+      <a href="../index.html">Overview</a>
+      <a href="research.html">Research Foundation</a>
+      <a class="active" href="current-system.html">PICARD2 Today</a>
+      <a href="roadmap.html">Near-Term Horizon</a>
+      <a href="getting-started.html">Experiment Model</a>
+    </nav>
+  </header>
+  <div class="page with-sidebar">
+    <aside class="subnav">
+      <div class="label">On this page</div>
+      <ul>
+        <li><a href="#product">Current product</a></li>
+        <li><a href="#redesign">Why the redesign</a></li>
+        <li><a href="#architecture">Architecture</a></li>
+        <li><a href="#model">Current model</a></li>
+        <li><a href="#comparison">Vision comparison</a></li>
+        <li><a href="#blockers">Known blockers</a></li>
+        <li><a href="#durable">Durable concepts</a></li>
+        <li><a href="#confidence">Confidence</a></li>
+      </ul>
+    </aside>
+    <main>
+      <section id="product">
+        <div class="eyebrow">PICARD2 · active implementation</div>
+        <h1>Where PICARD is today</h1>
+        <p class="lead">PICARD2 is the current attempt to turn PICARD into a simpler web application around a persistent Spark cluster. It establishes useful technical pieces, but today it behaves more like a prototype job console than a complete scientific experimentation platform.</p>
+        <div class="cards">
+          <div class="card"><h3>Sign in</h3><p>Users authenticate with GitHub and must belong to the project organization.</p></div>
+          <div class="card"><h3>Manage inputs</h3><p>Users can upload, list, share, and delete CSV datasets and Python or JAR algorithm files.</p></div>
+          <div class="card"><h3>Create a run</h3><p>The submission page pairs one algorithm with one dataset and accepts an optional free-form argument string.</p></div>
+          <div class="card"><h3>Watch a run</h3><p>The runs console lists experiments, polls status, presents an output area, and offers a result download when the API reports one.</p></div>
+        </div>
+      </section>
+
+      <section id="redesign">
+        <h2>Why PICARD was redesigned</h2>
+        <p>No single architecture-decision record explains the rewrite, so the rationale below is inferred from the two codebases and PICARD1’s operational documentation. The strongest reason is not that every earlier framework was obsolete—PICARD1 used React 18 and .NET 8—but that research execution had become tightly coupled to a complex, failure-prone infrastructure lifecycle.</p>
+        <table>
+          <thead><tr><th>PICARD1 pressure</th><th>PICARD2 response</th></tr></thead>
+          <tbody>
+            <tr><td>Shell scripts built and deployed a fresh Docker Swarm/Hadoop/HDFS/YARN environment for each experiment, then had to tear it down cleanly.</td><td>Keep one Spark standalone master/worker topology available and submit jobs directly through <code>spark-submit</code>.</td></tr>
+            <tr><td>The .NET application used an in-process channel while orchestration and job state crossed API code, background services, shell scripts, containers, and files.</td><td>Give background execution an explicit Celery/Redis boundary and keep web/API persistence in Django and MySQL.</td></tr>
+            <tr><td>Development depended on a specific remote server, SSH tunneling, old cluster images, and operational knowledge that was difficult to reproduce.</td><td>Describe the full application as Docker Compose services that can share a consistent local or deployed topology.</td></tr>
+            <tr><td>The frontend accumulated several overlapping UI libraries and legacy flows around the earlier backend.</td><td>Start with a smaller React 19 application and a narrower API surface that can be redesigned around the current research journey.</td></tr>
+          </tbody>
+        </table>
+        <p>The redesign simplifies the intended architecture; it has not automatically solved reliability. Several research concepts and end-to-end contracts were left incomplete during the reset, which is why the current semester focuses on reconnecting PICARD2 to a proven scientific experiment.</p>
+      </section>
+
+      <section id="architecture">
+        <h2>How PICARD2 is organized</h2>
+        <div class="pipeline"><span>React web app</span><b>→ session + API →</b><span>Django</span><b>→</b><span>MySQL + file storage</span></div>
+        <div class="pipeline"><span>Django</span><b>→</b><span>Redis queue</span><b>→</b><span>Celery worker</span><b>→ spark-submit →</b><span>Spark master + worker</span></div>
+        <p>A seven-service Docker Compose configuration connects the frontend, API, database, Redis, Celery worker, Spark master, and Spark worker. Unlike the dissertation’s Hadoop/YARN cluster, this implementation uses Spark standalone and keeps the cluster available between experiments.</p>
+        <div class="callout"><strong>Architecture principle</strong>The cluster technology may evolve. The durable product concept is an asynchronous experiment that moves from validated configuration through distributed execution to persisted evidence.</div>
+      </section>
+
+      <section id="model">
+        <h2>What PICARD2 understands today</h2>
+        <table>
+          <thead><tr><th>Concept</th><th>Current representation</th><th>Important limitation</th></tr></thead>
+          <tbody>
+            <tr><td>Dataset</td><td>A named, owned CSV file with public/private visibility.</td><td>The platform does not describe schema, scientific role, version, or compatibility with an algorithm.</td></tr>
+            <tr><td>Algorithm</td><td>A named, owned Python or JAR file with an optional JAR main class.</td><td>There is no versioned execution contract or typed parameter definition.</td></tr>
+            <tr><td>Experiment</td><td>An ID, owner, algorithm, dataset, status, free-form arguments, output/result files, and creation time.</td><td>The record is not a complete reproducible scientific configuration and has no structured metrics.</td></tr>
+            <tr><td>Result</td><td>An intended text artifact plus an output file.</td><td>Logs, result paths, and API behavior disagree, and the portal does not interpret scientific outcomes.</td></tr>
+            <tr><td>Parameter study</td><td>Not represented.</td><td>There is no sweep, trial relationship, comparison, or ranking.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="comparison">
+        <h2>How PICARD2 compares with the research vision</h2>
+        <table>
+          <thead><tr><th>Research need</th><th>PICARD2 now</th><th>Gap to close</th></tr></thead>
+          <tbody>
+            <tr><td>Accessible distributed execution</td><td><span class="status partial">Foundation</span> The web, queue, worker, and Spark services exist.</td><td>Prove one representative research algorithm repeatedly from a documented environment.</td></tr>
+            <tr><td>Explicit algorithm contract</td><td><span class="status bad">Missing</span> Uploads are generic files and configuration is a raw string.</td><td>Describe inputs, typed parameters, outputs, metrics, and algorithm identity in stable contracts.</td></tr>
+            <tr><td>Reproducible experiment</td><td><span class="status bad">Incomplete</span> A run stores references and a status.</td><td>Snapshot the resolved dataset, algorithm version, parameters, lifecycle, and relevant execution context.</td></tr>
+            <tr><td>Scientific evidence</td><td><span class="status bad">Broken</span> Output and result files are intended but not coherent.</td><td>Persist and present understandable metrics, summaries, logs, errors, and artifacts.</td></tr>
+            <tr><td>Controlled parameter studies</td><td><span class="status bad">Missing</span> Runs are submitted one at a time.</td><td>Define ranges, generate trials, monitor them together, and compare outcomes.</td></tr>
+            <tr><td>Research growth</td><td><span class="status partial">Possible</span> The stack can host uploaded algorithms.</td><td>Create a dependable experiment boundary before adding more pipeline stages, domains, or streaming.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="blockers">
+        <h2>Why the central path is not reliable yet</h2>
+        <p>A code-level review found several disagreements across the API, worker, storage, and frontend:</p>
+        <ul>
+          <li>Experiment UUIDs are routed as integers.</li>
+          <li>Saved argument values are not passed to <code>spark-submit</code>.</li>
+          <li>JAR class options are placed in the wrong command position.</li>
+          <li>The worker and API expect different result filenames and locations.</li>
+          <li>The experiment-detail response exposes a file field instead of readable log text.</li>
+          <li>Rerun cleanup, artifact ownership, error detail, and server-side validation are incomplete.</li>
+        </ul>
+        <p>These are implementation problems rather than defining product behavior.</p>
+      </section>
+
+      <section id="durable">
+        <h2>Durable concepts in the current system</h2>
+        <div class="cards">
+          <div class="card"><h3>Keep the experiment mental model</h3><p>Users work with datasets, algorithms, configurations, asynchronous runs, and results. Those concepts remain useful when made scientifically precise.</p></div>
+          <div class="card"><h3>Keep long-running work observable</h3><p>A researcher needs history, status, logs, errors, and the ability to leave and return without losing the experiment.</p></div>
+          <div class="card"><h3>Structured configuration</h3><p>The target experiment model replaces the command-line argument box with typed definitions, defaults, units, constraints, and resolved values.</p></div>
+          <div class="card"><h3>Elevate the result</h3><p>Scientific metrics and comparison belong in the primary experience; raw logs and downloadable artifacts are supporting evidence.</p></div>
+        </div>
+        <div class="callout warn"><strong>Prototype, not finalized product</strong>The current LCARS interface demonstrates available operations. Its navigation, information hierarchy, terminology, and interaction model remain open as PICARD2 reconnects with the research workflow.</div>
+      </section>
+
+      <section id="confidence">
+        <h2>What has been validated</h2>
+        <div class="callout warn"><strong>Code-level assessment, not runtime certification</strong>The active experiment, frontend, and Compose paths were reviewed on 2026-08-17. A clean full-stack start, GitHub authentication, and the Spark experiment journey were not run end to end during this assessment.</div>
+      </section>
+    </main>
+  </div>
+  <footer class="footer">PICARD Project Onboarding · understand today’s prototype in light of the research purpose</footer>
+</body>
+</html>

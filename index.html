@@ -3,76 +3,89 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PICARD2 Onboarding</title>
+  <meta name="description" content="An introduction to PICARD, its research foundation, current implementation, and direction.">
+  <title>Welcome to PICARD</title>
   <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
   <header class="topnav">
-    <div class="brand">PICARD2 <span>TEAM ONBOARDING</span></div>
+    <div class="brand">PICARD <span>PROJECT ONBOARDING</span></div>
     <nav>
       <a class="active" href="index.html">Overview</a>
-      <a href="pages/current-system.html">Current System</a>
-      <a href="pages/migration.html">Migration</a>
-      <a href="pages/roadmap.html">Roadmap</a>
-      <a href="pages/getting-started.html">Getting Started</a>
+      <a href="pages/research.html">Research Foundation</a>
+      <a href="pages/current-system.html">PICARD2 Today</a>
+      <a href="pages/roadmap.html">Near-Term Horizon</a>
+      <a href="pages/getting-started.html">Experiment Model</a>
     </nav>
   </header>
 
   <main class="page">
     <section class="hero">
-      <div class="eyebrow">Active implementation · updated 2026-07-16</div>
-      <h1>PICARD is migrating.</h1>
-      <p>PICARD2 replaces the legacy stack with React, Django, Celery, Redis, MySQL, and a standalone Spark cluster. It is the codebase the incoming implementation team should develop—but its central experiment path still needs repair and several required PICARD1 concepts have not yet been reimplemented.</p>
+      <div class="eyebrow">West Virginia University · distributed machine-learning research</div>
+      <h1>Welcome to PICARD.</h1>
+      <p>PICARD is a research platform created to continue Dr. Thomas Devine’s graduate work on scalable machine learning for finding rare transient signals in enormous, highly imbalanced datasets. Its purpose is to help researchers configure, run, observe, and compare distributed experiments without having to assemble the computing infrastructure by hand.</p>
       <div class="actions">
-        <a class="button primary" href="pages/current-system.html">Understand PICARD2 →</a>
-        <a class="button" href="pages/roadmap.html">See the implementation plan</a>
+        <a class="button primary" href="pages/research.html">Research Foundation →</a>
+        <a class="button" href="pages/current-system.html">PICARD2 Today</a>
       </div>
     </section>
 
-    <section>
-      <div class="callout warn">
-        <strong>Team directive</strong>
-        Stabilize and complete the selected migration before implementing hyperparameter sweeps. PICARD1 is evidence of prior behavior, not a specification to copy blindly.
-      </div>
-      <h2>The situation in one minute</h2>
+    <section id="problem">
+      <h2>The problem PICARD exists to address</h2>
       <div class="cards">
-        <div class="card"><h3>What is new</h3><p>A cleaner Django/DRF API, React 19 frontend, GitHub organization login, UUID-owned public/private assets, Celery/Redis queueing, and Spark standalone execution.</p></div>
-        <div class="card"><h3>What works on paper</h3><p>Authentication, CSV and Python/JAR asset management, experiment records, asynchronous queueing, status polling, and a containerized local topology are present in the code.</p></div>
-        <div class="card"><h3>What is broken</h3><p>UUID routes, argument forwarding, JAR command ordering, log serialization, result naming/storage, rerun cleanup, and parts of validation prevent calling the single-run path reliable.</p></div>
-        <div class="card"><h3>What is missing</h3><p>Structured parameters and results, run names and lifecycle detail, cancellation, robust tests, and product decisions on large uploads, aggregation, export, and visualization.</p></div>
+        <div class="card"><h3>Signals are rare</h3><p>Pulsar signals are needles in a cosmic haystack. In one dataset from Devine’s work, only 0.05% of instances represented pulsars.</p></div>
+        <div class="card"><h3>Datasets are enormous</h3><p>Radio telescopes produce volumes of data that are impractical for manual review and computationally infeasible for a single machine to process efficiently.</p></div>
+        <div class="card"><h3>Labels are expensive</h3><p>Creating trustworthy training data requires expert inspection and can require additional telescope observations, so algorithms must learn effectively from limited labels.</p></div>
+        <div class="card"><h3>Research is iterative</h3><p>Researchers need to vary algorithms and parameters, repeat trials, measure both scientific quality and execution performance, and compare the evidence.</p></div>
       </div>
     </section>
 
-    <section id="current-state-brief">
-      <h2>Current State of PICARD: status and plan</h2>
-      <p>This high-level brief explains why the team is prioritizing completion of the PICARD2 migration before implementing parameter sweeps. It summarizes the system's current gaps, the phased plan for reaching a stable and testable foundation, the intended end state, and the context being handed to incoming design and implementation teams.</p>
-      <a class="button" href="https://docs.google.com/document/d/123vsxImsXQlKKeSMIXlwtOgYjm-YzyGs47kYLrMLXIE/edit?tab=t.0" target="_blank" rel="noopener noreferrer">Read the full status and plan →</a>
+    <section id="origin">
+      <h2>From Devine’s research to PICARD</h2>
+      <p>Devine developed a scalable workflow for identifying and classifying transient radio signals. His work produced distributed Spark algorithms—including D-RAPID for candidate identification and CoDRIFt for semi-supervised classification—and evaluated machine-learning choices across tens of thousands of experimental trials.</p>
+      <p>PICARD carries that work forward as a shared research environment. Its intended form makes distributed experimentation approachable while preserving the rigor of the underlying science: explicit inputs, reproducible configurations, observable execution, meaningful metrics, and comparable results.</p>
+      <div class="pipeline"><span>Research data</span><b>→</b><span>Algorithm + parameters</span><b>→</b><span>Distributed execution</span><b>→</b><span>Metrics + artifacts</span><b>→</b><span>Compare, learn, refine</span></div>
     </section>
 
-    <section>
-      <h2>Order of work</h2>
-      <div class="pipeline">
-        <span>Align retained scope</span><b>→</b><span>Make startup reproducible</span><b>→</b><span>Repair one complete run</span><b>→</b><span>Restore sweep-ready domain model</span><b>→</b><span>Complete selected parity</span><b>→</b><span>Build sweeps</span>
-      </div>
-      <p>The immediate success target is an authenticated user who can manage supported assets, configure a structured experiment, run it reliably on Spark, observe and cancel it, inspect/download results, and recover sensibly from failures.</p>
-    </section>
-
-    <section>
-      <h2>Choose your next page</h2>
+    <section id="identity">
+      <h2>What kind of project is PICARD?</h2>
       <div class="cards">
-        <a class="card" href="pages/current-system.html"><h3>Current System</h3><p>Architecture, data model, user flows, known defects, and what has actually been validated.</p></a>
-        <a class="card" href="pages/migration.html"><h3>Migration</h3><p>What PICARD1 had, what PICARD2 has, and which capabilities need explicit decisions.</p></a>
-        <a class="card" href="pages/roadmap.html"><h3>Roadmap</h3><p>The incoming team's phased plan, exit criteria, first backlog, and post-migration sweep direction.</p></a>
-        <a class="card" href="pages/getting-started.html"><h3>Getting Started</h3><p>Repository map, reading order, honest setup status, and first contribution guidance.</p></a>
+        <div class="card"><h3>A scientific experiment platform</h3><p>PICARD is organized around research questions, datasets, algorithms, controlled configurations, trials, and evidence—not merely around launching jobs.</p></div>
+        <div class="card"><h3>A bridge to distributed computing</h3><p>The platform handles authentication, queueing, Spark execution, status, and result delivery so researchers can focus on the experiment.</p></div>
+        <div class="card"><h3>A continuation, not a finished product</h3><p>Devine’s dissertation identified future work in pipeline scalability, algorithm tuning, additional applications, and streaming. PICARD provides a place for that work to continue.</p></div>
       </div>
     </section>
 
-    <section>
-      <h2>Historical PICARD1 portal</h2>
-      <p>The prior onboarding portal describes the ASP.NET Core, Docker Swarm, Hadoop/HDFS, and YARN implementation. It is preserved unchanged for historical reference, but its architecture and setup instructions are deprecated.</p>
-      <a class="button" href="archive/picard1/index.html">Open the archived PICARD1 portal</a>
+    <section id="redesign">
+      <h2>Why is there a PICARD2?</h2>
+      <p>The first PICARD implementation proved that a browser could submit research jobs to distributed hardware, but its execution path was difficult to operate and extend. Each experiment crossed a .NET API, an in-process queue, orchestration code, and shell scripts that provisioned a fresh Docker Swarm with Hadoop, HDFS, YARN, and Spark. Failures could leave cluster resources or files in an uncertain state, while local development and deployment depended heavily on server-specific knowledge.</p>
+      <p>PICARD2 is an architectural reset around a smaller set of clearer services: a modern React client, Django/DRF API and data model, Celery with Redis for background work, MySQL persistence, and a persistent Spark standalone cluster managed through Docker Compose. The intent is to make the platform easier to understand, test, maintain, and deploy while preserving its distributed-research purpose.</p>
+      <div class="callout"><strong>The mission did not change</strong>PICARD2 changes how the platform is built. It still exists to make Devine’s line of distributed experimentation accessible and reproducible; the current work is reconnecting the cleaner foundation to that scientific purpose.</div>
+    </section>
+
+    <section id="direction">
+      <h2>Where the project is going</h2>
+      <table>
+        <thead><tr><th>Horizon</th><th>Project state</th></tr></thead>
+        <tbody>
+          <tr><td>Today</td><td>PICARD2 has a modern web application and a containerized Django, Celery, Redis, MySQL, and Spark foundation. Its central experiment and result paths are not yet dependable, and it does not yet represent scientific experiments richly enough.</td></tr>
+          <tr><td>This semester</td><td>Establish one complete research loop: reliably run a thesis-relevant algorithm, view its configuration and scientific results, and conduct a structured parameter sweep that compares multiple trials.</td></tr>
+          <tr><td>Beyond this semester</td><td>Use that foundation to incorporate more of the scientific workflow, improve and evaluate research algorithms, support additional datasets and domains, scale deployment, and eventually explore streaming experiments.</td></tr>
+        </tbody>
+      </table>
+      <div class="callout"><strong>The guiding idea</strong>PICARD’s near-term direction makes each research experiment easier to define, reproduce, understand, and extend.</div>
+    </section>
+
+    <section id="next">
+      <h2>Project guide</h2>
+      <div class="cards">
+        <a class="card" href="pages/research.html"><h3>Research Foundation</h3><p>The astronomy problem, Devine’s scientific workflow and algorithms, experimental evaluation, and long-term research direction.</p></a>
+        <a class="card" href="pages/current-system.html"><h3>PICARD2 Today</h3><p>The current product experience and architecture compared directly with the needs of the research vision.</p></a>
+        <a class="card" href="pages/roadmap.html"><h3>Near-Term Horizon</h3><p>The focused step toward the research vision and the product state expected at semester end.</p></a>
+        <a class="card" href="pages/getting-started.html"><h3>Experiment Model</h3><p>Project vocabulary, participant roles, experiment lifecycle, result structure, and parameter-study model.</p></a>
+      </div>
     </section>
   </main>
-  <footer class="footer">PICARD2 Onboarding Portal · migration status edition · updated 2026-07-28</footer>
+  <footer class="footer">PICARD Project Onboarding · research foundation → platform → continued discovery · updated 2026-08-17</footer>
 </body>
 </html>

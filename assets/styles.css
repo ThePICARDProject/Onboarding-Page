@@ -70,6 +70,10 @@ h3 { margin: .2rem 0 .4rem; color: var(--gold); }
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(235px, 1fr)); gap: 1rem; margin: 1.2rem 0; }
 .card { padding: 1.15rem 1.25rem; background: var(--panel); border: 1px solid var(--border); border-radius: 9px; }
 .card p { margin: .3rem 0 0; color: var(--muted); font-size: .92rem; }
+.card ul { margin: .65rem 0 0; padding-left: 1.15rem; }
+.card li { margin: .4rem 0; color: var(--muted); font-size: .9rem; }
+.goal-card { position: relative; padding-top: 3.1rem; border-top: 4px solid var(--gold); }
+.goal-number { position: absolute; top: .75rem; right: 1rem; color: var(--border); font-size: 1.65rem; font-weight: 800; line-height: 1; }
 a.card { display: block; color: var(--text); transition: transform .15s, border-color .15s; }
 a.card:hover { transform: translateY(-2px); border-color: var(--gold); text-decoration: none; }
 .callout { margin: 1.2rem 0; padding: .9rem 1.1rem; background: var(--panel-2); border-left: 4px solid var(--info); border-radius: 0 7px 7px 0; }

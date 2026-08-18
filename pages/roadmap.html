@@ -1,15 +1,101 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Roadmap · PICARD2 Onboarding</title><link rel="stylesheet" href="../assets/styles.css"></head>
-<body><header class="topnav"><div class="brand">PICARD2 <span>TEAM ONBOARDING</span></div><nav><a href="../index.html">Overview</a><a href="current-system.html">Current System</a><a href="migration.html">Migration</a><a class="active" href="roadmap.html">Roadmap</a><a href="getting-started.html">Getting Started</a></nav></header>
-<div class="page with-sidebar"><aside class="subnav"><div class="label">On this page</div><ul><li><a href="#sequence">Development sequence</a></li><li><a href="#backlog">First backlog</a></li><li><a href="#sweeps">After migration</a></li><li><a href="#artifacts">Keep current</a></li></ul></aside><main>
-<section id="sequence"><div class="eyebrow">Incoming implementation team</div><h1>Development roadmap</h1><p class="lead">The team will first turn PICARD2 into a reproducible, explicitly scoped, reliable single-run platform. Hyperparameter sweep implementation follows only after that foundation exists.</p>
-<div class="phase"><h3>Phase 0 · Align scope and preserve evidence</h3><p>Find the original sweep design, demos, sample jobs, expected results, infrastructure constraints, and stakeholder owners. Mark every legacy capability retain, redesign, or retire.</p><p class="exit"><strong>Exit:</strong> agreed parity target and canonical journeys, not “copy PICARD1.”</p></div>
-<div class="phase"><h3>Phase 1 · Make the repository reproducible</h3><p>Add safe environment/setup docs, pinned tool versions, health checks, test infrastructure, CI checks, and a one-command startup/smoke path.</p><p class="exit"><strong>Exit:</strong> a new developer can clone, configure, start, and verify PICARD2 without oral knowledge.</p></div>
-<div class="phase"><h3>Phase 2 · Repair one complete experiment</h3><p>Fix UUID routing, artifact ownership, Python/JAR invocation, argument forwarding, logs, statuses, errors, reruns, and worker recovery. Prove upload → create → queue → execute → log → result download.</p><p class="exit"><strong>Exit:</strong> repeatable Python and JAR end-to-end tests pass from a clean database.</p></div>
-<div class="phase"><h3>Phase 3 · Restore the sweep-ready domain model</h3><p>Add versioned algorithm definitions, typed ordered parameters, immutable run snapshots, supported resource settings, experiment names/lifecycle data, structured results, and validated API schemas.</p><p class="exit"><strong>Exit:</strong> one run is reproducible and its configuration/results are queryable without parsing strings.</p></div>
-<div class="phase"><h3>Phase 4 · Complete selected parity</h3><p>Add cancellation; chosen metadata, large-upload, aggregation, export, and visualization workflows; plus versioning, retention, quotas, sharing, and cleanup rules.</p><p class="exit"><strong>Exit:</strong> every retained capability has an acceptance test and owner sign-off.</p></div>
-<div class="phase"><h3>Phase 5 · Adapt and implement hyperparameter sweeps</h3><p>Revise the prior design against the PICARD2 target model and build bounded, observable multi-trial orchestration.</p><p class="exit"><strong>Exit:</strong> the first strategy creates reproducible child runs, respects Spark capacity, and ranks completed trials by a persisted objective metric.</p></div></section>
-<section id="backlog"><h2>Recommended first backlog</h2><ol class="steps"><li>Run a scope workshop using the capability matrix.</li><li>Add local setup documentation and test scaffolding.</li><li>Fix UUID routing with ownership/authorization coverage.</li><li>Write the execution and artifact protocol before changing the worker.</li><li>Repair Python single-run execution and download end to end.</li><li>Repair the equivalent JAR path.</li><li>Add lifecycle timestamps, errors, and cancellation.</li><li>Design structured parameter/configuration schemas beside the sweep design.</li><li>Implement algorithm definitions and immutable run snapshots.</li><li>Reassess aggregation and visualization before porting either.</li></ol></section>
-<section id="sweeps"><h2>Post-migration development: sweeps</h2><p>The intended next feature is hyperparameter sweep orchestration. A sweep should own ordinary child experiments/trials; each child retains one resolved, reproducible configuration.</p><table><thead><tr><th>Design question</th><th>Decision required before implementation</th></tr></thead><tbody><tr><td>Search spaces</td><td>Categorical, ranges, log ranges, and whether conditional parameters are in the first release.</td></tr><tr><td>Strategies</td><td>Initial support for grid, random, or another bounded strategy.</td></tr><tr><td>Capacity</td><td>Maximum trials, concurrency, queue policy, and Spark protection.</td></tr><tr><td>Lifecycle</td><td>Sweep/trial cancellation, retries, partial failures, and resumability.</td></tr><tr><td>Ranking</td><td>Objective metric, optimization direction, and structured result source.</td></tr><tr><td>Reproducibility</td><td>Seed, algorithm version, dataset identity, resolved configuration, and environment.</td></tr><tr><td>Experience</td><td>Progress, comparison, best-trial presentation, and export.</td></tr></tbody></table><div class="callout danger"><strong>Do not extend free-form args</strong>The current <code>args</code> string cannot safely describe, validate, expand, or compare parameter configurations. Replace it with structured semantics before sweep work.</div></section>
-<section id="artifacts"><h2>Artifacts the team must keep current</h2><ul><li>Capability matrix with retain/redesign/retire state, issue/PR, owner, and acceptance-test links.</li><li>Architecture decision records for orchestration, parameters, results, sharing, and deletion.</li><li>Versioned API contract or generated OpenAPI documentation.</li><li>Algorithm execution/input/output protocol for Python and JAR authors.</li><li>Local/deployed runbook, smoke test, and troubleshooting notes.</li><li>This portal whenever a capability or phase changes status.</li></ul></section>
-</main></div><footer class="footer">PICARD2 Onboarding · stabilize → model → complete parity → sweep</footer></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="PICARD's near-term horizon and the research-platform state expected at semester end.">
+  <title>Near-Term Horizon · PICARD Onboarding</title>
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+  <header class="topnav">
+    <div class="brand">PICARD <span>PROJECT ONBOARDING</span></div>
+    <nav>
+      <a href="../index.html">Overview</a>
+      <a href="research.html">Research Foundation</a>
+      <a href="current-system.html">PICARD2 Today</a>
+      <a class="active" href="roadmap.html">Near-Term Horizon</a>
+      <a href="getting-started.html">Experiment Model</a>
+    </nav>
+  </header>
+  <div class="page with-sidebar">
+    <aside class="subnav">
+      <div class="label">On this page</div>
+      <ul>
+        <li><a href="#destination">Destination</a></li>
+        <li><a href="#goals">Three outcomes</a></li>
+        <li><a href="#alignment">Research alignment</a></li>
+        <li><a href="#experience">Target experience</a></li>
+        <li><a href="#sequence">Sequence</a></li>
+        <li><a href="#scope">Scope boundary</a></li>
+        <li><a href="#after">What this unlocks</a></li>
+      </ul>
+    </aside>
+    <main>
+      <section id="destination">
+        <div class="eyebrow">A focused step toward Devine’s research vision</div>
+        <h1>This semester’s direction</h1>
+        <p class="lead">The goal is to turn PICARD2’s technical foundation into the smallest complete scientific experiment loop. The semester-end state supports reliable execution of one representative algorithm, understandable results, and study of how parameter choices change those results.</p>
+        <div class="callout"><strong>Semester destination</strong>One thesis-relevant algorithm and representative dataset can be configured with typed values, executed through PICARD2’s real Spark path, observed from submission through completion, and evaluated either as one experiment or as a structured parameter sweep.</div>
+      </section>
+
+      <section id="goals">
+        <h2>Three required outcomes</h2>
+        <div class="cards">
+          <div class="card goal-card"><div class="goal-number">01</div><h3>Reliable experiment</h3><p>A documented algorithm and data contract runs repeatedly through the queue and Spark. Validation, lifecycle, reruns, and failures behave predictably, and automated evidence proves the path.</p></div>
+          <div class="card goal-card"><div class="goal-number">02</div><h3>Understandable result</h3><p>The portal shows what ran, the resolved configuration, execution status and timing, readable logs and errors, a scientific metric or summary, and the resulting artifact.</p></div>
+          <div class="card goal-card"><div class="goal-number">03</div><h3>Parameter sweep</h3><p>A researcher defines a bounded grid of values, previews the trials, submits once, follows progress, preserves partial results, and compares completed trials by meaningful metrics.</p></div>
+        </div>
+      </section>
+
+      <section id="alignment">
+        <h2>Why these outcomes align with the research</h2>
+        <table>
+          <thead><tr><th>Devine’s research practice</th><th>This semester’s platform response</th></tr></thead>
+          <tbody>
+            <tr><td>Run computationally expensive algorithms on distributed resources.</td><td>Prove a reliable, observable Spark execution path for one representative research algorithm.</td></tr>
+            <tr><td>Measure both classification quality and execution performance.</td><td>Model scientific metrics, timing, logs, and artifacts as first-class experiment results.</td></tr>
+            <tr><td>Conduct controlled trials across algorithm and system parameters.</td><td>Replace raw arguments with typed configuration and implement a complete grid-sweep workflow.</td></tr>
+            <tr><td>Use empirical evidence to improve CoDRIFt and other methods.</td><td>Keep configurations and results reproducible and make trial comparison part of the portal.</td></tr>
+            <tr><td>Extend the workflow to new data, domains, and eventually streams.</td><td>Establish a stable experiment contract that later algorithms and execution modes can reuse.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="experience">
+        <h2>The product experience at semester end</h2>
+        <div class="pipeline"><span>Select algorithm + data</span><b>→</b><span>Configure fixed values or ranges</span><b>→</b><span>Review experiment</span><b>→</b><span>Run on Spark</span><b>→</b><span>Monitor</span><b>→</b><span>Interpret + compare</span></div>
+        <div class="cards">
+          <div class="card"><h3>For one experiment</h3><p>The researcher chooses a dataset, completes a parameter form generated from the algorithm contract, reviews the resolved setup, submits, monitors the run, and receives an interpretable result.</p></div>
+          <div class="card"><h3>For a parameter study</h3><p>The same configuration can assign finite ranges or value lists to selected parameters. PICARD previews the Cartesian combinations and treats each as an ordinary, reproducible trial.</p></div>
+          <div class="card"><h3>For later review</h3><p>Experiments and sweeps remain discoverable with their configuration, lifecycle, scientific metrics, logs, errors, and artifacts. Completed trials can be compared without reconstructing them manually.</p></div>
+        </div>
+      </section>
+
+      <section id="sequence">
+        <h2>Near-term progression</h2>
+        <div class="phase"><h3>1 · Establish the representative research contract</h3><p>A thesis-relevant algorithm and representative dataset establish the first complete PICARD2 path, including inputs, typed parameters, expected outputs, scientific metrics, and the target environment.</p><p class="exit"><strong>Milestone:</strong> one concrete, versioned example defines a valid experiment and result.</p></div>
+        <div class="phase"><h3>2 · Repair and prove the single experiment</h3><p>Make startup reproducible and repair routing, invocation, parameter forwarding, storage, lifecycle, logging, error handling, and rerun behavior on that path.</p><p class="exit"><strong>Milestone:</strong> the representative experiment succeeds or fails predictably from a clean environment.</p></div>
+        <div class="phase"><h3>3 · Present scientific results</h3><p>Persist the resolved configuration and result schema, then make metrics, summary, timing, logs, errors, and artifacts understandable in the portal.</p><p class="exit"><strong>Milestone:</strong> a researcher can interpret the experiment without direct database, worker, or filesystem access.</p></div>
+        <div class="phase"><h3>4 · Implement and harden parameter sweeps</h3><p>Add typed ranges, exact trial preview, atomic batch creation, capacity-aware scheduling, aggregate progress, failure isolation, stop behavior, and comparison of completed trials.</p><p class="exit"><strong>Milestone:</strong> the full study can be configured, run, revisited, and interpreted through PICARD2 with automated end-to-end evidence.</p></div>
+      </section>
+
+      <section id="scope">
+        <h2>What this semester does—and does not—promise</h2>
+        <div class="cards">
+          <div class="card"><h3>Included</h3><ul><li>One representative thesis-relevant algorithm</li><li>One documented data and result contract</li><li>Reliable single experiments</li><li>Typed, reproducible configuration</li><li>Scientific result viewing</li><li>Bounded grid sweeps and comparison</li><li>Tests and a target-environment runbook</li></ul></div>
+          <div class="card"><h3>Part of the longer vision</h3><ul><li>Additional algorithms and datasets</li><li>The complete identification/classification pipeline</li><li>Further CoDRIFt optimization and evaluation</li><li>Other astronomy and imbalanced-data domains</li><li>Advanced search strategies</li><li>Large-scale institutional deployment</li><li>Online learning and streaming data</li></ul></div>
+        </div>
+        <p>The boundary keeps this semester achievable while ensuring that every delivered capability supports the research trajectory instead of becoming a disconnected demo.</p>
+      </section>
+
+      <section id="after">
+        <h2>What this foundation unlocks</h2>
+        <p>Once one scientific experiment loop is dependable, the project can add more research capability without redesigning the product around each algorithm. New algorithms can publish the same kinds of parameter and result contracts; new pipeline stages can compose around the same execution records; and new interfaces can compare experiments using durable scientific evidence.</p>
+        <div class="pipeline"><span>One proven experiment contract</span><b>→</b><span>More research algorithms</span><b>→</b><span>Complete workflow</span><b>→</b><span>New domains</span><b>→</b><span>Streaming research</span></div>
+      </section>
+    </main>
+  </div>
+  <footer class="footer">PICARD Project Onboarding · establish the experiment loop that continued research needs</footer>
+</body>
+</html>

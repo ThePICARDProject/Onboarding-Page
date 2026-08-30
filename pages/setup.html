@@ -27,7 +27,7 @@
         <li><a href="#before">Before you begin</a></li>
         <li><a href="#gateway">Request gateway access</a></li>
         <li><a href="#connect">Connect to PICARD</a></li>
-        <li><a href="#shortcut">Optional SSH shortcut</a></li>
+        <li><a href="#shortcut">Configure SSH and tunneling</a></li>
         <li><a href="#complete">Confirm your setup</a></li>
       </ul>
     </aside>
@@ -64,12 +64,12 @@
           <li>From the gateway session you opened above, connect to the PICARD host:</li>
         </ol>
         <pre><code>ssh &lt;your-picard-username&gt;@picard.csee.wvu.edu</code></pre>
-        <div class="callout"><strong>Success check</strong>If the command logs you in and shows a shell prompt on the PICARD machine, your required access is set up. You can stop here or configure the optional shortcut below.</div>
+        <div class="callout"><strong>Success check</strong>If the command logs you in and shows a shell prompt on the PICARD machine, your required access is set up. You can stop here if you are only verifying access; continue below to configure convenient shell access and the application tunnel.</div>
       </section>
 
       <section id="shortcut">
-        <h2>3. Optional: configure an SSH shortcut</h2>
-        <p>An SSH configuration lets your computer use the WVU gateway as a jump host automatically.</p>
+        <h2>3. Configure SSH shortcuts and app tunneling</h2>
+        <p>An SSH configuration lets your computer use the WVU gateway as a jump host automatically. The configuration below provides <code>picard</code> for a normal shell session and <code>picard-tunnel</code> for access to the web application.</p>
         <ol class="steps">
           <li>On your computer, go to <code>~/.ssh/</code>. Create the file <code>config</code> if it does not exist, then open it in an editor. For example:</li>
         </ol>
@@ -77,7 +77,7 @@
 vim config</code></pre>
         <p>If Vim is unfamiliar, see this <a href="https://www.freecodecamp.org/news/vim-beginners-guide/" target="_blank" rel="noopener">basic Vim guide ↗</a>.</p>
         <ol class="steps" start="2">
-          <li>Add the following configuration. Replace both username placeholders; if your PICARD username differs from your school username, use the correct value in each host block.</li>
+          <li>Add the following configuration. Replace each username placeholder; if your PICARD username differs from your school username, use the correct value in each host block.</li>
         </ol>
         <pre><code>Host gateway
     HostName ssh.wvu.edu
@@ -90,7 +90,18 @@ Host picard
     User &lt;your-picard-username&gt;
     Port 22
     IdentityFile ~/.ssh/id_rsa
-    ProxyJump gateway</code></pre>
+    ProxyJump gateway
+
+Host picard-tunnel
+    HostName picard.csee.wvu.edu
+    User &lt;your-picard-username&gt;
+    Port 22
+    IdentityFile ~/.ssh/id_rsa
+    ProxyJump gateway
+    SessionType none
+    ExitOnForwardFailure yes
+    LocalForward 3000 127.0.0.1:3000
+    LocalForward 5000 127.0.0.1:5000</code></pre>
         <ol class="steps" start="3">
           <li>Check the contents of <code>~/.ssh/</code>. If <code>id_rsa</code> does not exist, generate the key pair:</li>
         </ol>
@@ -104,13 +115,19 @@ Host picard
         </ol>
         <pre><code>ssh picard</code></pre>
         <p>You may still enter your gateway password once. SSH then jumps through the gateway and logs in to PICARD using your identity.</p>
+        <ol class="steps" start="6">
+          <li>When PICARD2 is available, start the application tunnel in a dedicated terminal and leave it running while you use the application:</li>
+        </ol>
+        <pre><code>ssh picard-tunnel</code></pre>
+        <p>This forwarding-only connection does not display a remote shell prompt. With the tunnel open, visit <a href="http://localhost:3000">http://localhost:3000</a>; press <code>Ctrl+C</code> in the terminal when you are ready to close the tunnel.</p>
+        <div class="callout"><strong>Why forward port 5000 too?</strong>PICARD2 currently serves the frontend on port 3000 and its backend API on port 5000. The browser needs both forwarded ports for the current application to work. We are working to simplify this so a future version will require only one application port.</div>
       </section>
 
       <section id="complete">
         <h2>Confirm your setup</h2>
         <div class="cards">
           <div class="card"><h3>Required access</h3><p><code>ssh &lt;username&gt;@ssh.wvu.edu</code> reaches the WVU gateway, and a second SSH command from there reaches <code>picard.csee.wvu.edu</code>.</p></div>
-          <div class="card"><h3>Optional shortcut</h3><p><code>ssh picard</code> reaches the PICARD machine through the gateway.</p></div>
+          <div class="card"><h3>SSH shortcuts</h3><p><code>ssh picard</code> opens a shell through the gateway. <code>ssh picard-tunnel</code> forwards the application to your computer.</p></div>
         </div>
       </section>
     </main>

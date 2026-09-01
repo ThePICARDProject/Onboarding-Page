@@ -1,6 +1,6 @@
 # PICARD Project Onboarding Portal
 
-This is an introduction to PICARD. Open `index.html` directly or serve this directory with any static file server.
+This is an introduction to PICARD. You can access the portal here: https://thepicardproject.github.io/Onboarding-Page/pages/setup.html
 
 The portal introduces:
 

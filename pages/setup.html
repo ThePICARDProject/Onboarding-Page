@@ -63,21 +63,21 @@
           <li>Ask Dr. Devine or another PICARD team member to create your account on the PICARD machine if you do not already have one.</li>
           <li>From the gateway session you opened above, connect to the PICARD host:</li>
         </ol>
-        <pre><code>ssh &lt;your-picard-username&gt;@picard.csee.wvu.edu</code></pre>
+        <pre><code>ssh cadet@picard.csee.wvu.edu</code></pre>
         <div class="callout"><strong>Success check</strong>If the command logs you in and shows a shell prompt on the PICARD machine, your required access is set up. You can stop here if you are only verifying access; continue below to configure convenient shell access and the application tunnel.</div>
       </section>
 
       <section id="shortcut">
-        <h2>3. Configure SSH shortcuts and app tunneling</h2>
-        <p>An SSH configuration lets your computer use the WVU gateway as a jump host automatically. The configuration below provides <code>picard</code> for a normal shell session and <code>picard-tunnel</code> for access to the web application.</p>
+        <h2>3. On your own computer, configure SSH shortcuts and app tunneling</h2>
+        <div class="callout warn"><strong>Stop: leave the PICARD machine before continuing</strong>Do not run any command in this section on the PICARD machine or the WVU gateway. Every step below must be completed in a macOS or WSL terminal on your own computer. Open a new local terminal, or type <code>exit</code> until you have returned to your own computer.</div>
+        <p>From your own computer, an SSH configuration can use the WVU gateway as a jump host automatically. The configuration below provides <code>picard</code> for a normal shell session and <code>picard-tunnel</code> for access to the web application.</p>
         <ol class="steps">
-          <li>On your computer, go to <code>~/.ssh/</code>. Create the file <code>config</code> if it does not exist, then open it in an editor. For example:</li>
+          <li><strong>On your own computer—not PICARD or the gateway—</strong>go to <code>~/.ssh/</code>. Create or open the file <code>config</code> with Nano:</li>
         </ol>
         <pre><code>cd ~/.ssh
-vim config</code></pre>
-        <p>If Vim is unfamiliar, see this <a href="https://www.freecodecamp.org/news/vim-beginners-guide/" target="_blank" rel="noopener">basic Vim guide ↗</a>.</p>
+nano config</code></pre>
         <ol class="steps" start="2">
-          <li>Add the following configuration. Replace each username placeholder; if your PICARD username differs from your school username, use the correct value in each host block.</li>
+          <li>Still in Nano on your own computer, add the following configuration. Replace each username placeholder; if your PICARD username differs from your school username, use the correct value in each host block.</li>
         </ol>
         <pre><code>Host gateway
     HostName ssh.wvu.edu
@@ -87,14 +87,14 @@ vim config</code></pre>
 
 Host picard
     HostName picard.csee.wvu.edu
-    User backend
+    User cadet
     Port 22
     IdentityFile ~/.ssh/id_rsa
     ProxyJump gateway
 
 Host picard-tunnel
     HostName picard.csee.wvu.edu
-    User backend
+    User cadet
     Port 22
     IdentityFile ~/.ssh/id_rsa
     ProxyJump gateway
@@ -102,21 +102,22 @@ Host picard-tunnel
     ExitOnForwardFailure yes
     LocalForward 3000 127.0.0.1:3000
     LocalForward 5000 127.0.0.1:5000</code></pre>
+        <p>In Nano, press <code>Ctrl+O</code>, then <code>Enter</code> to save; press <code>Ctrl+X</code> to exit.</p>
         <ol class="steps" start="3">
-          <li>Check the contents of <code>~/.ssh/</code>. If <code>id_rsa</code> does not exist, generate the key pair:</li>
+          <li>Back in the terminal on your own computer, check the contents of <code>~/.ssh/</code>. If <code>id_rsa</code> does not exist, generate the key pair on your own computer:</li>
         </ol>
         <pre><code>ssh-keygen -t rsa</code></pre>
         <ol class="steps" start="4">
-          <li>Copy your public key to PICARD. Enter your password or passwords when prompted; the same password may be requested several times.</li>
+          <li>From your own computer, copy your public key to PICARD. Enter your password or passwords when prompted; the same password may be requested several times.</li>
         </ol>
         <pre><code>ssh-copy-id picard</code></pre>
         <ol class="steps" start="5">
-          <li>Use the new host shortcut to connect:</li>
+          <li>From your own computer, use the new host shortcut to connect:</li>
         </ol>
         <pre><code>ssh picard</code></pre>
         <p>You may still enter your gateway password once. SSH then jumps through the gateway and logs in to PICARD using your identity.</p>
         <ol class="steps" start="6">
-          <li>When PICARD2 is available, start the application tunnel in a dedicated terminal and leave it running while you use the application:</li>
+          <li>When PICARD2 is available, open a dedicated terminal on your own computer, start the application tunnel there, and leave it running while you use the application:</li>
         </ol>
         <pre><code>ssh picard-tunnel</code></pre>
         <p>This forwarding-only connection does not display a remote shell prompt. With the tunnel open, visit <a href="http://localhost:3000">http://localhost:3000</a>; press <code>Ctrl+C</code> in the terminal when you are ready to close the tunnel.</p>
